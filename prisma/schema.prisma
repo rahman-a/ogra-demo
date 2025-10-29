@@ -1,0 +1,304 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  image         String?
+  email         String    @unique
+  password      String
+  role          Role      @default(PASSENGER)
+  emailVerified DateTime?
+
+  // Profile fields
+  phone         String?
+  address       String?
+  city          String?
+  state         String?
+  pincode       String?
+  licenseNumber String?
+  dateOfBirth   DateTime?
+
+  // Document uploads (for drivers)
+  licenseDocument String?
+  criminalRecord  String?
+  drugReport      String?
+  formalPhoto     String?
+
+  sessions             Session[]
+  vehicle              Vehicle? // One-to-one: driver can only register one vehicle
+  bookings             Booking[] // Passenger bookings
+  wallet               Wallet? // One-to-one: user's e-wallet
+  transactions         Transaction[] // User's transaction history (sent)
+  receivedTransactions Transaction[] @relation("ReceivedTransactions") // Transactions received from others
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([email])
+  @@index([role])
+  @@index([deletedAt])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Vehicle {
+  id            String  @id @default(uuid())
+  userId        String  @unique // One-to-one: each driver can only have one vehicle
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleNumber String  @unique
+  vehicleType   String // e.g., Car, Van, Bus, Microbus
+  model         String?
+  capacity      Int // Total passenger capacity
+
+  route Route? // One-to-one: each vehicle operates on one fixed route
+  seats Seat[] // All seats in this vehicle
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@index([deletedAt])
+}
+
+// Seat represents individual physical seats in a vehicle
+model Seat {
+  id         String     @id @default(uuid())
+  vehicleId  String
+  vehicle    Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  seatNumber Int // e.g., 1, 2, 3, etc.
+  status     SeatStatus @default(AVAILABLE)
+
+  bookings Booking[] // Bookings assigned to this seat
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([vehicleId, seatNumber]) // Each seat number is unique within a vehicle
+  @@index([vehicleId])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+// Route represents the fixed line/path that a vehicle operates on
+model Route {
+  id        String  @id @default(uuid())
+  vehicleId String  @unique // One-to-one: each vehicle has one route
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  // Route details
+  origin       String // e.g., "Cairo"
+  destination  String // e.g., "Mansura"
+  pricePerSeat Float // Fixed price for this route
+
+  // Additional route information
+  distance    Float? // Distance in km
+  duration    Int? // Estimated duration in minutes
+  description String? // e.g., "Daily service between Cairo and Mansura"
+
+  rides Ride[] // Multiple ride instances on this route
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([vehicleId])
+  @@index([deletedAt])
+}
+
+// Ride represents an instance of a trip on a route
+model Ride {
+  id      String @id @default(uuid())
+  routeId String
+  route   Route  @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  // Ride details
+  direction      RideDirection @default(FORWARD) // FORWARD: origin→destination, RETURN: destination→origin
+  departureTime  DateTime
+  availableSeats Int // Starts at vehicle capacity, decreases with bookings
+  status         RideStatus    @default(ACTIVE) // Created as ACTIVE when driver clicks "Start Ride"
+
+  bookings     Booking[] // Passenger bookings for this ride
+  transactions Transaction[] // Transactions related to this ride (driver earnings)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([routeId])
+  @@index([status])
+  @@index([departureTime])
+  @@index([deletedAt])
+}
+
+// Booking represents a passenger's reservation on a ride for a specific seat
+model Booking {
+  id          String  @id @default(uuid())
+  rideId      String
+  ride        Ride    @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  passengerId String
+  passenger   User    @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  seatId      String? // Optional: for scanned barcodes that may not contain seat info
+  seat        Seat?   @relation(fields: [seatId], references: [id], onDelete: Cascade)
+
+  // Booking details
+  totalPrice   Float // route.pricePerSeat
+  pickupPoint  String? // Specific pickup location (optional)
+  dropoffPoint String? // Specific dropoff location (optional)
+  status       BookingStatus @default(CONFIRMED)
+
+  transactions Transaction[] // Transactions related to this booking (payments/refunds)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([rideId])
+  @@index([passengerId])
+  @@index([seatId])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+// Wallet represents user's e-wallet for payments
+model Wallet {
+  id      String @id @default(uuid())
+  userId  String @unique // One-to-one: each user has one wallet
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance Float  @default(0) // Current balance in wallet
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@index([deletedAt])
+}
+
+// Transaction represents all wallet activities
+model Transaction {
+  id     String          @id @default(uuid())
+  userId String
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type   TransactionType
+  amount Float // Positive for credits, negative for debits
+
+  // Transaction details
+  description   String? // e.g., "Deposit via Visa", "Booking payment"
+  paymentMethod PaymentMethod? // How the money was added/withdrawn
+  status        TransactionStatus @default(COMPLETED)
+
+  // Proper foreign key references for JOINs
+  bookingId String? // Reference to Booking for booking payments/refunds
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  rideId String? // Reference to Ride for driver earnings
+  ride   Ride?   @relation(fields: [rideId], references: [id], onDelete: SetNull)
+
+  // For wallet transfers between users
+  recipientId String? // User who received the transfer
+  recipient   User?   @relation("ReceivedTransactions", fields: [recipientId], references: [id], onDelete: SetNull)
+
+  // Balance tracking
+  balanceBefore Float // Wallet balance before transaction
+  balanceAfter  Float // Wallet balance after transaction
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([bookingId])
+  @@index([rideId])
+  @@index([recipientId])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+enum Role {
+  DRIVER
+  PASSENGER
+  ADMIN
+}
+
+enum RideDirection {
+  FORWARD // Origin → Destination
+  RETURN // Destination → Origin
+}
+
+enum RideStatus {
+  ACTIVE // Ride is currently in progress
+  COMPLETED // Ride finished successfully
+  CANCELLED // Ride was cancelled
+}
+
+enum BookingStatus {
+  CONFIRMED // Booking is confirmed
+  CANCELLED // Passenger cancelled
+  COMPLETED // Ride completed
+}
+
+enum SeatStatus {
+  AVAILABLE // Seat is available for booking
+  OCCUPIED // Seat is currently occupied
+  ON_MAINTENANCE // Seat is under maintenance
+}
+
+enum TransactionType {
+  DEPOSIT // Money added to wallet
+  WITHDRAWAL // Money withdrawn from wallet (ATM)
+  TRANSFER_OUT // Money sent to another wallet
+  TRANSFER_IN // Money received from another wallet
+  BOOKING_PAYMENT // Payment for ride booking
+  BOOKING_REFUND // Refund from cancelled booking
+  RIDE_EARNING // Driver earnings from completed ride
+}
+
+enum PaymentMethod {
+  DEBIT_CARD // Debit card payment
+  CREDIT_CARD // Credit card payment
+  INSTAPAY // InstaPay payment
+  VODAFONE_CASH // Vodafone Cash e-wallet
+  ETISALAT_CASH // e& Cash (Etisalat) e-wallet
+  ORANGE_CASH // Orange Cash e-wallet
+  ATM // ATM withdrawal
+  WALLET_TRANSFER // Transfer from another wallet
+}
+
+enum TransactionStatus {
+  PENDING // Transaction is being processed
+  COMPLETED // Transaction completed successfully
+  FAILED // Transaction failed
+  CANCELLED // Transaction was cancelled
+}
