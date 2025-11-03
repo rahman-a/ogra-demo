@@ -4,32 +4,31 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
+import { put } from '@vercel/blob'
 
 async function saveFile(
   file: File,
   userId: string,
   fileType: string
 ): Promise<string> {
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
+  try {
+    // Generate unique filename
+    const timestamp = Date.now()
+    const extension = file.name.split('.').pop()
+    const filename = `uploads/${userId}/${fileType}_${timestamp}.${extension}`
 
-  // Create uploads directory if it doesn't exist
-  const uploadDir = join(process.cwd(), 'public', 'uploads', userId)
-  await mkdir(uploadDir, { recursive: true })
+    // Upload to Vercel Blob
+    const blob = await put(filename, file, {
+      access: 'public',
+      addRandomSuffix: false,
+    })
 
-  // Generate unique filename
-  const timestamp = Date.now()
-  const extension = file.name.split('.').pop()
-  const filename = `${fileType}_${timestamp}.${extension}`
-  const filepath = join(uploadDir, filename)
-
-  // Save file
-  await writeFile(filepath, buffer)
-
-  // Return relative path for storing in database
-  return `/uploads/${userId}/${filename}`
+    // Return the blob URL
+    return blob.url
+  } catch (error) {
+    console.error('File upload error:', error)
+    throw new Error(`Failed to upload ${fileType}`)
+  }
 }
 
 export async function updateProfile(formData: FormData) {
