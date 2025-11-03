@@ -11,7 +11,7 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
+  id            String    @id @default(cuid())
   name          String
   image         String?
   email         String    @unique
@@ -70,7 +70,7 @@ model VerificationToken {
 }
 
 model Vehicle {
-  id            String  @id @default(uuid())
+  id            String  @id @default(cuid())
   userId        String  @unique // One-to-one: each driver can only have one vehicle
   user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   vehicleNumber String  @unique
@@ -91,7 +91,7 @@ model Vehicle {
 
 // Seat represents individual physical seats in a vehicle
 model Seat {
-  id         String     @id @default(uuid())
+  id         String     @id @default(cuid())
   vehicleId  String
   vehicle    Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   seatNumber Int // e.g., 1, 2, 3, etc.
@@ -111,7 +111,7 @@ model Seat {
 
 // Route represents the fixed line/path that a vehicle operates on
 model Route {
-  id        String  @id @default(uuid())
+  id        String  @id @default(cuid())
   vehicleId String  @unique // One-to-one: each vehicle has one route
   vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
@@ -137,7 +137,7 @@ model Route {
 
 // Ride represents an instance of a trip on a route
 model Ride {
-  id      String @id @default(uuid())
+  id      String @id @default(cuid())
   routeId String
   route   Route  @relation(fields: [routeId], references: [id], onDelete: Cascade)
 
@@ -162,7 +162,7 @@ model Ride {
 
 // Booking represents a passenger's reservation on a ride for a specific seat
 model Booking {
-  id          String  @id @default(uuid())
+  id          String  @id @default(cuid())
   rideId      String
   ride        Ride    @relation(fields: [rideId], references: [id], onDelete: Cascade)
   passengerId String
@@ -191,7 +191,7 @@ model Booking {
 
 // Wallet represents user's e-wallet for payments
 model Wallet {
-  id      String @id @default(uuid())
+  id      String @id @default(cuid())
   userId  String @unique // One-to-one: each user has one wallet
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   balance Float  @default(0) // Current balance in wallet
@@ -206,7 +206,7 @@ model Wallet {
 
 // Transaction represents all wallet activities
 model Transaction {
-  id     String          @id @default(uuid())
+  id     String          @id @default(cuid())
   userId String
   user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   type   TransactionType

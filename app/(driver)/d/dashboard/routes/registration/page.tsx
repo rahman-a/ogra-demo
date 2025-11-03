@@ -3,7 +3,7 @@ import Link from 'next/link'
 import {
   ArrowLeft,
   MapPin,
-  IndianRupee,
+  Coins,
   Route as RouteIcon,
   Clock,
   FileText,
@@ -143,7 +143,7 @@ export default async function RouteRegistration({}: Props) {
         {/* Pricing & Details */}
         <div className='bg-white rounded-2xl shadow-lg p-6 space-y-4'>
           <div className='flex items-center gap-2 mb-4'>
-            <IndianRupee className='w-5 h-5 text-green-600' />
+            <Coins className='w-5 h-5 text-green-600' />
             <h2 className='text-lg font-semibold text-gray-800'>
               Pricing & Additional Info
             </h2>
@@ -155,8 +155,8 @@ export default async function RouteRegistration({}: Props) {
               htmlFor='pricePerSeat'
               className='text-base font-medium flex items-center gap-2'
             >
-              <IndianRupee className='w-4 h-4' />
-              Price per Seat *
+              <Coins className='w-4 h-4' />
+              Price per Seat (E£) *
             </Label>
             <Input
               id='pricePerSeat'
@@ -169,7 +169,7 @@ export default async function RouteRegistration({}: Props) {
               required
             />
             <p className='text-xs text-gray-500'>
-              Fixed price per seat for this route
+              Fixed price per seat for this route (Egyptian Pounds)
             </p>
           </div>
 

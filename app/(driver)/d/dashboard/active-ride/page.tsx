@@ -71,7 +71,7 @@ export default async function ActiveRidePage({}: Props) {
   }
 
   const activeRide = vehicle.route.rides[0]
-  const bookedSeatsCount = vehicle.capacity - 1 - activeRide.availableSeats
+  const bookedSeatsCount = vehicle.capacity - activeRide.availableSeats
   const totalEarnings = bookedSeatsCount * vehicle.route.pricePerSeat
 
   // Calculate ride duration
@@ -150,7 +150,9 @@ export default async function ActiveRidePage({}: Props) {
               </div>
               <div>
                 <p className='text-xs opacity-90'>Earnings</p>
-                <p className='font-bold text-lg'>₹{totalEarnings.toFixed(0)}</p>
+                <p className='font-bold text-lg'>
+                  E£{totalEarnings.toFixed(0)}
+                </p>
               </div>
             </div>
           </div>
@@ -199,7 +201,7 @@ export default async function ActiveRidePage({}: Props) {
                   </div>
                   <div className='text-right'>
                     <p className='font-bold text-green-600'>
-                      ₹{booking.totalPrice}
+                      E£{booking.totalPrice}
                     </p>
                     {booking.seatId && (
                       <p className='text-xs text-gray-500'>
@@ -226,7 +228,7 @@ export default async function ActiveRidePage({}: Props) {
               className='w-full h-14 bg-green-600 hover:bg-green-700 text-white text-lg font-bold rounded-xl shadow-lg flex items-center justify-center gap-2'
             >
               <CheckCircle className='w-6 h-6' />
-              Complete Ride & Receive ₹{totalEarnings.toFixed(0)}
+              Complete Ride & Receive E£{totalEarnings.toFixed(0)}
             </Button>
           </form>
         </div>

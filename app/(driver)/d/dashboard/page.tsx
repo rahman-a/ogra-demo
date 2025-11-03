@@ -160,16 +160,12 @@ export default async function DriverDashboard({}: Props) {
                     <div className='w-full bg-gray-200 rounded-full h-3 overflow-hidden'>
                       <div
                         className={`bg-linear-to-r from-orange-400 to-orange-500 h-3 rounded-full transition-all duration-500`}
+                        style={{
+                          width: `${profileCompletion}%`,
+                          minWidth: '2%',
+                        }}
                         data-progress={profileCompletion}
-                      >
-                        <div
-                          className='h-full'
-                          style={{
-                            width: `${profileCompletion}%`,
-                            minWidth: '2%',
-                          }}
-                        />
-                      </div>
+                      ></div>
                     </div>
                   </div>
                 </div>
@@ -202,7 +198,7 @@ export default async function DriverDashboard({}: Props) {
               </div>
             </div>
             <div className='mt-4 text-center text-sm opacity-90'>
-              ₹{vehicle.route.pricePerSeat} per seat
+              E£{vehicle.route.pricePerSeat} per seat
               {vehicle.route.distance && ` • ${vehicle.route.distance} km`}
               {vehicle.route.duration && ` • ${vehicle.route.duration} min`}
             </div>

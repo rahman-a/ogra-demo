@@ -27,6 +27,7 @@ import { auth as getSession } from '@/auth'
 import { headers } from 'next/headers'
 import { cn } from '@/lib/utils'
 import { ROLES_ROUTES } from '@/lib/constants'
+import { LogoutButton } from './logout-button'
 
 const excludedRoutes = ['/auth/signin', '/auth/signup']
 
@@ -91,17 +92,20 @@ export default async function Navbar({
           </div>
           <div className='flex gap-2'>
             {session?.user ? (
-              <Button asChild variant='outline' size='sm'>
-                <a
-                  href={
-                    ROLES_ROUTES[
-                      session?.user.role as keyof typeof ROLES_ROUTES
-                    ]
-                  }
-                >
-                  Dashbaord
-                </a>
-              </Button>
+              <>
+                <Button asChild variant='outline' size='sm'>
+                  <a
+                    href={
+                      ROLES_ROUTES[
+                        session?.user.role as keyof typeof ROLES_ROUTES
+                      ]
+                    }
+                  >
+                    Dashboard
+                  </a>
+                </Button>
+                <LogoutButton />
+              </>
             ) : (
               <>
                 <Button asChild variant='outline' size='sm'>
@@ -143,17 +147,20 @@ export default async function Navbar({
 
                   <div className='flex flex-col gap-3'>
                     {session?.user ? (
-                      <Button asChild variant='outline' size='sm'>
-                        <a
-                          href={
-                            ROLES_ROUTES[
-                              session?.user.role as keyof typeof ROLES_ROUTES
-                            ]
-                          }
-                        >
-                          Dashbaord
-                        </a>
-                      </Button>
+                      <>
+                        <Button asChild variant='outline' size='sm'>
+                          <a
+                            href={
+                              ROLES_ROUTES[
+                                session?.user.role as keyof typeof ROLES_ROUTES
+                              ]
+                            }
+                          >
+                            Dashboard
+                          </a>
+                        </Button>
+                        <LogoutButton />
+                      </>
                     ) : (
                       <>
                         <Button asChild variant='outline' size='sm'>

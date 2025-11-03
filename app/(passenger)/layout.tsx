@@ -1,6 +1,7 @@
 import { auth } from '@/auth'
 import { Role } from '@prisma/client'
 import { redirect } from 'next/navigation'
+import { Toaster } from 'sonner'
 
 export default async function PassengerLayout({
   children,
@@ -10,5 +11,10 @@ export default async function PassengerLayout({
   const session = await auth()
   if (!session) redirect('/auth/signin')
   if (session && session.user.role !== Role.PASSENGER) redirect('/403')
-  return children
+  return (
+    <>
+      {children}
+      <Toaster position='top-center' richColors closeButton />
+    </>
+  )
 }
