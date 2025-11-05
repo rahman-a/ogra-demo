@@ -1,0 +1,377 @@
+'use client'
+
+import React, { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import {
+  User,
+  Phone,
+  MapPin,
+  Calendar,
+  Save,
+  Loader2,
+  Edit2,
+  X,
+} from 'lucide-react'
+import { updatePassengerProfile } from '@/actions/UpdatePassengerProfile'
+import { toast } from 'sonner'
+
+interface PassengerProfileFormProps {
+  user: {
+    name: string
+    email: string
+    phone: string | null
+    address: string | null
+    city: string | null
+    state: string | null
+    dateOfBirth: Date | null
+    createdAt: Date
+  }
+}
+
+export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  // Form state
+  const [formData, setFormData] = useState({
+    name: user.name || '',
+    phone: user.phone || '',
+    address: user.address || '',
+    city: user.city || '',
+    state: user.state || '',
+    dateOfBirth: user.dateOfBirth
+      ? new Date(user.dateOfBirth).toISOString().split('T')[0]
+      : '',
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    setLoading(true)
+    const loadingToast = toast.loading('Updating profile...')
+
+    try {
+      const formDataObj = new FormData()
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataObj.append(key, value)
+      })
+
+      const result = await updatePassengerProfile(formDataObj)
+
+      toast.dismiss(loadingToast)
+
+      if (result.success) {
+        toast.success('Success!', {
+          description: result.message,
+          duration: 5000,
+        })
+        setIsEditing(false)
+      } else {
+        toast.error('Failed', {
+          description: result.message,
+          duration: 5000,
+        })
+      }
+    } catch (error) {
+      toast.dismiss(loadingToast)
+      toast.error('Error', {
+        description: 'Failed to update profile',
+        duration: 5000,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setFormData({
+      name: user.name || '',
+      phone: user.phone || '',
+      address: user.address || '',
+      city: user.city || '',
+      state: user.state || '',
+      dateOfBirth: user.dateOfBirth
+        ? new Date(user.dateOfBirth).toISOString().split('T')[0]
+        : '',
+    })
+    setIsEditing(false)
+  }
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
+  return (
+    <div className='max-w-2xl mx-auto'>
+      {/* Header */}
+      <div className='flex items-center justify-between mb-6'>
+        <div>
+          <h1 className='text-2xl font-bold text-gray-800'>My Profile</h1>
+          <p className='text-sm text-gray-600 mt-1'>
+            Manage your personal information
+          </p>
+        </div>
+        {!isEditing && (
+          <Button
+            onClick={() => setIsEditing(true)}
+            className='bg-blue-600 hover:bg-blue-700'
+          >
+            <Edit2 className='w-4 h-4 mr-2' />
+            Edit Profile
+          </Button>
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        {/* Profile Card */}
+        <div className='bg-white rounded-2xl shadow-lg p-6 mb-6'>
+          {/* Account Info Section */}
+          <div className='mb-6'>
+            <h2 className='text-lg font-bold text-gray-800 mb-4 flex items-center gap-2'>
+              <User className='w-5 h-5 text-blue-600' />
+              Account Information
+            </h2>
+
+            {/* Email (Read-only) */}
+            <div className='mb-4'>
+              <label className='block text-sm font-medium text-gray-700 mb-2'>
+                Email Address
+              </label>
+              <div className='bg-gray-50 px-4 py-3 rounded-lg border border-gray-200'>
+                <p className='text-gray-700'>{user.email}</p>
+              </div>
+              <p className='text-xs text-gray-500 mt-1'>
+                Email cannot be changed
+              </p>
+            </div>
+
+            {/* Name */}
+            <div className='mb-4'>
+              <label
+                htmlFor='name'
+                className='block text-sm font-medium text-gray-700 mb-2'
+              >
+                Full Name *
+              </label>
+              <input
+                id='name'
+                name='name'
+                type='text'
+                value={formData.name}
+                onChange={handleInputChange}
+                disabled={!isEditing || loading}
+                required
+                className={`w-full px-4 py-3 rounded-lg border ${
+                  isEditing
+                    ? 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                    : 'bg-gray-50 border-gray-200'
+                } ${!isEditing || loading ? 'cursor-not-allowed' : ''}`}
+                placeholder='Enter your full name'
+              />
+            </div>
+
+            {/* Member Since */}
+            <div className='mb-4'>
+              <label className='block text-sm font-medium text-gray-700 mb-2'>
+                Member Since
+              </label>
+              <div className='bg-gray-50 px-4 py-3 rounded-lg border border-gray-200'>
+                <p className='text-gray-700'>
+                  {new Date(user.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Information Section */}
+          <div className='mb-6'>
+            <h2 className='text-lg font-bold text-gray-800 mb-4 flex items-center gap-2'>
+              <Phone className='w-5 h-5 text-green-600' />
+              Contact Information
+            </h2>
+
+            {/* Phone */}
+            <div className='mb-4'>
+              <label
+                htmlFor='phone'
+                className='block text-sm font-medium text-gray-700 mb-2'
+              >
+                Phone Number
+              </label>
+              <input
+                id='phone'
+                name='phone'
+                type='tel'
+                value={formData.phone}
+                onChange={handleInputChange}
+                disabled={!isEditing || loading}
+                className={`w-full px-4 py-3 rounded-lg border ${
+                  isEditing
+                    ? 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                    : 'bg-gray-50 border-gray-200'
+                } ${!isEditing || loading ? 'cursor-not-allowed' : ''}`}
+                placeholder='e.g., +20 123 456 7890'
+              />
+            </div>
+          </div>
+
+          {/* Address Section */}
+          <div className='mb-6'>
+            <h2 className='text-lg font-bold text-gray-800 mb-4 flex items-center gap-2'>
+              <MapPin className='w-5 h-5 text-red-600' />
+              Address
+            </h2>
+
+            {/* Street Address */}
+            <div className='mb-4'>
+              <label
+                htmlFor='address'
+                className='block text-sm font-medium text-gray-700 mb-2'
+              >
+                Street Address
+              </label>
+              <textarea
+                id='address'
+                name='address'
+                value={formData.address}
+                onChange={handleInputChange}
+                disabled={!isEditing || loading}
+                rows={2}
+                className={`w-full px-4 py-3 rounded-lg border ${
+                  isEditing
+                    ? 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                    : 'bg-gray-50 border-gray-200'
+                } ${!isEditing || loading ? 'cursor-not-allowed' : ''}`}
+                placeholder='Enter your street address'
+              />
+            </div>
+
+            {/* City and State */}
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
+              <div>
+                <label
+                  htmlFor='city'
+                  className='block text-sm font-medium text-gray-700 mb-2'
+                >
+                  City
+                </label>
+                <input
+                  id='city'
+                  name='city'
+                  type='text'
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  disabled={!isEditing || loading}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    isEditing
+                      ? 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                      : 'bg-gray-50 border-gray-200'
+                  } ${!isEditing || loading ? 'cursor-not-allowed' : ''}`}
+                  placeholder='Enter city'
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor='state'
+                  className='block text-sm font-medium text-gray-700 mb-2'
+                >
+                  State/Province
+                </label>
+                <input
+                  id='state'
+                  name='state'
+                  type='text'
+                  value={formData.state}
+                  onChange={handleInputChange}
+                  disabled={!isEditing || loading}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    isEditing
+                      ? 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                      : 'bg-gray-50 border-gray-200'
+                  } ${!isEditing || loading ? 'cursor-not-allowed' : ''}`}
+                  placeholder='Enter state'
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Personal Information Section */}
+          <div>
+            <h2 className='text-lg font-bold text-gray-800 mb-4 flex items-center gap-2'>
+              <Calendar className='w-5 h-5 text-purple-600' />
+              Personal Information
+            </h2>
+
+            {/* Date of Birth */}
+            <div className='mb-4'>
+              <label
+                htmlFor='dateOfBirth'
+                className='block text-sm font-medium text-gray-700 mb-2'
+              >
+                Date of Birth
+              </label>
+              <input
+                id='dateOfBirth'
+                name='dateOfBirth'
+                type='date'
+                value={formData.dateOfBirth}
+                onChange={handleInputChange}
+                disabled={!isEditing || loading}
+                className={`w-full px-4 py-3 rounded-lg border ${
+                  isEditing
+                    ? 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                    : 'bg-gray-50 border-gray-200'
+                } ${!isEditing || loading ? 'cursor-not-allowed' : ''}`}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        {isEditing && (
+          <div className='flex gap-3'>
+            <Button
+              type='submit'
+              disabled={loading}
+              className='flex-1 h-12 bg-green-600 hover:bg-green-700 text-white font-bold'
+            >
+              {loading ? (
+                <>
+                  <Loader2 className='w-5 h-5 mr-2 animate-spin' />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className='w-5 h-5 mr-2' />
+                  Save Changes
+                </>
+              )}
+            </Button>
+            <Button
+              type='button'
+              onClick={handleCancel}
+              disabled={loading}
+              variant='outline'
+              className='flex-1 h-12'
+            >
+              <X className='w-5 h-5 mr-2' />
+              Cancel
+            </Button>
+          </div>
+        )}
+      </form>
+    </div>
+  )
+}
+

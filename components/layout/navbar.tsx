@@ -113,13 +113,13 @@ export default async function Navbar({
           <div className='flex items-center gap-6'>
             {/* Logo */}
             <a href='#' className='flex items-center gap-2' />
-            <div className='flex items-center'>
+            {/* <div className='flex items-center'>
               <NavigationMenu>
                 <NavigationMenuList>
                   {dynamicMenu.map((item) => renderMenuItem(item))}
                 </NavigationMenuList>
               </NavigationMenu>
-            </div>
+            </div> */}
           </div>
           <div className='flex gap-2'>
             {session?.user ? (
@@ -168,13 +168,13 @@ export default async function Navbar({
                   </SheetTitle>
                 </SheetHeader>
                 <div className='flex flex-col gap-6 p-4'>
-                  <Accordion
+                  {/* <Accordion
                     type='single'
                     collapsible
                     className='flex w-full flex-col gap-4'
                   >
                     {dynamicMenu.map((item) => renderMobileMenuItem(item))}
-                  </Accordion>
+                  </Accordion> */}
 
                   <div className='flex flex-col gap-3'>
                     {session?.user ? (

@@ -8,11 +8,11 @@ import {
   Calendar,
   CheckCircle,
   XCircle,
-  TrendingUp,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BarcodeScanner } from './BarcodeScanner'
 import { PaymentModal } from './PaymentModal'
+import { PassengerNavigation } from './PassengerNavigation'
 import type { ScanResult } from '@/actions/ScanBarcode'
 import { toast } from 'sonner'
 
@@ -119,7 +119,7 @@ export function PassengerDashboardClient({
               </div>
             </div>
             <Button
-              onClick={() => (window.location.href = '/p/wallet')}
+              onClick={() => (window.location.href = '/p/dashboard/wallet')}
               className='bg-white text-green-600 hover:bg-green-50'
             >
               Charge
@@ -150,6 +150,9 @@ export function PassengerDashboardClient({
         </div>
       </div>
 
+      {/* Navigation Menu */}
+      <PassengerNavigation />
+
       {/* Barcode Scanner Button */}
       <div className='max-w-md mx-auto mb-6'>
         <BarcodeScanner
@@ -162,7 +165,16 @@ export function PassengerDashboardClient({
       <div className='max-w-md mx-auto'>
         <div className='flex items-center justify-between mb-4'>
           <h2 className='text-xl font-bold text-gray-800'>Recent Rides</h2>
-          <TrendingUp className='w-5 h-5 text-gray-400' />
+          {bookings.length > 3 && (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => (window.location.href = '/p/dashboard/rides')}
+              className='text-blue-600 hover:text-blue-700'
+            >
+              View All →
+            </Button>
+          )}
         </div>
 
         {bookings.length === 0 ? (
@@ -179,7 +191,7 @@ export function PassengerDashboardClient({
           </div>
         ) : (
           <div className='space-y-3'>
-            {bookings.map((booking) => (
+            {bookings.slice(0, 3).map((booking) => (
               <div
                 key={booking.id}
                 className='bg-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition-shadow'

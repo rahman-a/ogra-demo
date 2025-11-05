@@ -15,6 +15,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { startRide } from '@/actions/StartRide'
 import { completeRide } from '@/actions/CompleteRide'
+import { DriverNavigation } from '@/components/driver/DriverNavigation'
 
 type Props = object
 
@@ -146,41 +147,8 @@ export default async function DriverDashboard({}: Props) {
         </div>
       </div>
 
-      {/* Profile Completion Button */}
-      {profileCompletion < 100 && (
-        <div className='max-w-md mx-auto mb-6'>
-          <Link href='/d/dashboard/profile'>
-            <div className='bg-white rounded-2xl shadow-lg p-5 border-2 border-orange-100 hover:border-orange-300 active:scale-98 transition-all duration-200'>
-              <div className='flex items-center gap-4'>
-                <div className='bg-orange-100 rounded-full p-3 relative'>
-                  <User className='w-7 h-7 text-orange-600' />
-                  <div className='absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center'>
-                    {profileCompletion}%
-                  </div>
-                </div>
-                <div className='flex-1'>
-                  <h3 className='text-lg font-semibold text-gray-800'>
-                    Complete Your Profile
-                  </h3>
-                  <div className='mt-2'>
-                    <div className='w-full bg-gray-200 rounded-full h-3 overflow-hidden'>
-                      <div
-                        className={`bg-linear-to-r from-orange-400 to-orange-500 h-3 rounded-full transition-all duration-500`}
-                        style={{
-                          width: `${profileCompletion}%`,
-                          minWidth: '2%',
-                        }}
-                        data-progress={profileCompletion}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                <div className='text-orange-500 text-2xl'>→</div>
-              </div>
-            </div>
-          </Link>
-        </div>
-      )}
+      {/* Navigation Menu */}
+      <DriverNavigation hasVehicle={hasVehicle} hasRoute={hasRoute} />
 
       {/* Route Information */}
       {hasRoute && vehicle?.route && (
@@ -328,52 +296,6 @@ export default async function DriverDashboard({}: Props) {
         )}
       </div>
 
-      {/* Secondary Actions */}
-      <div className='max-w-md mx-auto space-y-4'>
-        {/* Register Route Link */}
-        {!hasRoute && hasVehicle && (
-          <Link href='/d/dashboard/routes/registration'>
-            <div className='bg-white rounded-2xl shadow-lg p-6 border-2 border-green-100 hover:border-green-300 active:scale-98 transition-all duration-200'>
-              <div className='flex items-center gap-4'>
-                <div className='bg-green-100 rounded-full p-4'>
-                  <RouteIcon className='w-8 h-8 text-green-600' />
-                </div>
-                <div className='flex-1'>
-                  <h3 className='text-xl font-semibold text-gray-800'>
-                    Register Route
-                  </h3>
-                  <p className='text-sm text-gray-500 mt-1'>
-                    Set up your fixed travel line
-                  </p>
-                </div>
-                <div className='text-green-500 text-2xl'>→</div>
-              </div>
-            </div>
-          </Link>
-        )}
-
-        {/* Register Vehicle Link */}
-        {!hasVehicle && (
-          <Link href='/d/dashboard/vehicles/registration'>
-            <div className='bg-white rounded-2xl shadow-lg p-6 border-2 border-purple-100 hover:border-purple-300 active:scale-98 transition-all duration-200'>
-              <div className='flex items-center gap-4'>
-                <div className='bg-purple-100 rounded-full p-4'>
-                  <Car className='w-8 h-8 text-purple-600' />
-                </div>
-                <div className='flex-1'>
-                  <h3 className='text-xl font-semibold text-gray-800'>
-                    Register Vehicle
-                  </h3>
-                  <p className='text-sm text-gray-500 mt-1'>
-                    Add your vehicle info
-                  </p>
-                </div>
-                <div className='text-purple-500 text-2xl'>→</div>
-              </div>
-            </div>
-          </Link>
-        )}
-      </div>
     </div>
   )
 }
