@@ -17,11 +17,7 @@ export async function registerVehicle(formData: FormData) {
     where: { userId: session.user.id },
   })
 
-  if (existingVehicle) {
-    throw new Error(
-      'You can only register one vehicle. Please update your existing vehicle instead.'
-    )
-  }
+  const isUpdateMode = !!existingVehicle
 
   const vehicleNumber = formData.get('vehicleNumber') as string
   const vehicleType = formData.get('vehicleType') as string
@@ -39,36 +35,86 @@ export async function registerVehicle(formData: FormData) {
   }
 
   try {
-    // Create vehicle and seats in a transaction
-    await prisma.$transaction(async (tx) => {
-      // Create the vehicle
-      const vehicle = await tx.vehicle.create({
-        data: {
-          userId: session.user.id,
-          vehicleNumber: vehicleNumber.toUpperCase(),
-          vehicleType,
-          model: model || null,
-          capacity: capacityNum,
-        },
-      })
+    if (isUpdateMode) {
+      // Update existing vehicle
+      await prisma.$transaction(async (tx) => {
+        // Update the vehicle
+        await tx.vehicle.update({
+          where: { userId: session.user.id },
+          data: {
+            vehicleNumber: vehicleNumber.toUpperCase(),
+            vehicleType,
+            model: model || null,
+            capacity: capacityNum,
+          },
+        })
 
-      // Create individual seats for the vehicle
-      const seatData = Array.from({ length: capacityNum }, (_, index) => ({
-        vehicleId: vehicle.id,
-        seatNumber: index + 1, // Seat numbers start from 1
-        status: 'AVAILABLE' as const,
-      }))
+        // If capacity changed, adjust seats
+        const existingSeatCount = await tx.seat.count({
+          where: { vehicleId: existingVehicle.id },
+        })
 
-      await tx.seat.createMany({
-        data: seatData,
+        if (existingSeatCount !== capacityNum) {
+          // Delete all existing seats
+          await tx.seat.deleteMany({
+            where: { vehicleId: existingVehicle.id },
+          })
+
+          // Create new seats with updated capacity
+          const seatData = Array.from({ length: capacityNum }, (_, index) => ({
+            vehicleId: existingVehicle.id,
+            seatNumber: index + 1,
+            status: 'AVAILABLE' as const,
+          }))
+
+          await tx.seat.createMany({
+            data: seatData,
+          })
+        }
       })
-    })
+    } else {
+      // Create vehicle and seats in a transaction
+      await prisma.$transaction(async (tx) => {
+        // Create the vehicle
+        const vehicle = await tx.vehicle.create({
+          data: {
+            userId: session.user.id,
+            vehicleNumber: vehicleNumber.toUpperCase(),
+            vehicleType,
+            model: model || null,
+            capacity: capacityNum,
+          },
+        })
+
+        // Create individual seats for the vehicle
+        const seatData = Array.from({ length: capacityNum }, (_, index) => ({
+          vehicleId: vehicle.id,
+          seatNumber: index + 1, // Seat numbers start from 1
+          status: 'AVAILABLE' as const,
+        }))
+
+        await tx.seat.createMany({
+          data: seatData,
+        })
+      })
+    }
   } catch (error) {
     console.error('Vehicle registration error:', error)
-    throw new Error('Failed to register vehicle and seats')
+    throw new Error(
+      isUpdateMode
+        ? 'Failed to update vehicle information'
+        : 'Failed to register vehicle and seats'
+    )
   }
 
-  // Revalidate and redirect to route registration
+  // Revalidate paths
   revalidatePath('/d/dashboard')
-  redirect('/d/dashboard/routes/registration')
+  revalidatePath('/d/dashboard/vehicles/registration')
+
+  // Redirect based on mode
+  if (isUpdateMode) {
+    redirect('/d/dashboard')
+  } else {
+    redirect('/d/dashboard/routes/registration')
+  }
 }

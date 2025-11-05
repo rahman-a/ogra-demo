@@ -28,10 +28,13 @@ type ExtendedUser = {
   address?: string | null
   city?: string | null
   state?: string | null
-  pincode?: string | null
-  licenseNumber?: string | null
+  driverId?: string | null
+  driverLicenseNumber?: string | null
+  carLicenseNumber?: string | null
   dateOfBirth?: Date | null
-  licenseDocument?: string | null
+  driverIdDocument?: string | null
+  driverLicenseDocument?: string | null
+  carLicenseDocument?: string | null
   criminalRecord?: string | null
   drugReport?: string | null
   formalPhoto?: string | null
@@ -48,10 +51,13 @@ function calculateProfileCompletion(user: ExtendedUser | null): number {
     'address',
     'city',
     'state',
-    'pincode',
-    'licenseNumber',
+    'driverId',
+    'driverLicenseNumber',
+    'carLicenseNumber',
     'dateOfBirth',
-    'licenseDocument',
+    'driverIdDocument',
+    'driverLicenseDocument',
+    'carLicenseDocument',
     'criminalRecord',
     'drugReport',
     'formalPhoto',

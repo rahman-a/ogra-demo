@@ -20,19 +20,22 @@ model User {
   emailVerified DateTime?
 
   // Profile fields
-  phone         String?
-  address       String?
-  city          String?
-  state         String?
-  pincode       String?
-  licenseNumber String?
-  dateOfBirth   DateTime?
+  phone               String?
+  address             String?
+  city                String?
+  state               String?
+  driverId            String? // Government-issued driver ID
+  driverLicenseNumber String?
+  carLicenseNumber    String?
+  dateOfBirth         DateTime?
 
   // Document uploads (for drivers)
-  licenseDocument String?
-  criminalRecord  String?
-  drugReport      String?
-  formalPhoto     String?
+  driverIdDocument      String?
+  driverLicenseDocument String?
+  carLicenseDocument    String?
+  criminalRecord        String?
+  drugReport            String?
+  formalPhoto           String?
 
   sessions             Session[]
   vehicle              Vehicle? // One-to-one: driver can only register one vehicle
@@ -95,6 +98,7 @@ model Seat {
   vehicleId  String
   vehicle    Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   seatNumber Int // e.g., 1, 2, 3, etc.
+  code       String     @unique // Unique 14-digit code for each seat
   status     SeatStatus @default(AVAILABLE)
 
   bookings Booking[] // Bookings assigned to this seat
@@ -106,6 +110,7 @@ model Seat {
   @@unique([vehicleId, seatNumber]) // Each seat number is unique within a vehicle
   @@index([vehicleId])
   @@index([status])
+  @@index([code])
   @@index([deletedAt])
 }
 

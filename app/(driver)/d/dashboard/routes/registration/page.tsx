@@ -41,10 +41,9 @@ export default async function RouteRegistration({}: Props) {
     redirect('/d/dashboard/vehicles/registration')
   }
 
-  // If route already exists, redirect to dashboard
-  if (vehicle.route) {
-    redirect('/d/dashboard')
-  }
+  // Check if route exists for update mode
+  const existingRoute = vehicle.route
+  const isUpdateMode = !!existingRoute
 
   return (
     <div className='min-h-screen bg-linear-to-b from-green-50 to-white p-4 pb-20'>
@@ -58,13 +57,20 @@ export default async function RouteRegistration({}: Props) {
           </Link>
           <div className='flex items-center gap-2'>
             <RouteIcon className='w-6 h-6 text-green-600' />
+            {isUpdateMode && (
+              <span className='text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full'>
+                Edit Mode
+              </span>
+            )}
           </div>
         </div>
         <h1 className='text-2xl font-bold text-gray-800 text-center'>
-          Register Your Route
+          {isUpdateMode ? 'Update Your Route' : 'Register Your Route'}
         </h1>
         <p className='text-center text-gray-600 mt-2'>
-          Set up your fixed travel line
+          {isUpdateMode
+            ? 'Modify your fixed travel line details'
+            : 'Set up your fixed travel line'}
         </p>
       </div>
 
@@ -109,6 +115,7 @@ export default async function RouteRegistration({}: Props) {
               name='origin'
               type='text'
               placeholder='e.g., Cairo'
+              defaultValue={existingRoute?.origin || ''}
               className='h-12 text-base'
               required
             />
@@ -127,6 +134,7 @@ export default async function RouteRegistration({}: Props) {
               name='destination'
               type='text'
               placeholder='e.g., Mansura'
+              defaultValue={existingRoute?.destination || ''}
               className='h-12 text-base'
               required
             />
@@ -165,6 +173,7 @@ export default async function RouteRegistration({}: Props) {
               min='0'
               step='0.01'
               placeholder='e.g., 150'
+              defaultValue={existingRoute?.pricePerSeat || ''}
               className='h-12 text-base'
               required
             />
@@ -189,6 +198,7 @@ export default async function RouteRegistration({}: Props) {
               min='0'
               step='0.1'
               placeholder='e.g., 120'
+              defaultValue={existingRoute?.distance || ''}
               className='h-12 text-base'
             />
           </div>
@@ -208,6 +218,7 @@ export default async function RouteRegistration({}: Props) {
               type='number'
               min='0'
               placeholder='e.g., 90'
+              defaultValue={existingRoute?.duration || ''}
               className='h-12 text-base'
             />
           </div>
@@ -226,6 +237,7 @@ export default async function RouteRegistration({}: Props) {
               name='description'
               rows={3}
               placeholder='e.g., Daily service with AC, comfortable seats'
+              defaultValue={existingRoute?.description || ''}
               className='w-full px-3 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
             />
           </div>
@@ -233,7 +245,7 @@ export default async function RouteRegistration({}: Props) {
 
         {/* Submit Button */}
         <div className='pt-4'>
-          <SubmitButton />
+          <SubmitButton isUpdateMode={isUpdateMode} />
         </div>
       </form>
 
@@ -242,9 +254,15 @@ export default async function RouteRegistration({}: Props) {
         <p className='text-sm text-gray-500'>
           All fields marked with * are required
         </p>
-        <p className='text-xs text-gray-400 mt-2'>
-          You can only register one route per vehicle
-        </p>
+        {isUpdateMode ? (
+          <p className='text-xs text-green-600 mt-2 font-medium'>
+            ✓ Route registered - You can update the information anytime
+          </p>
+        ) : (
+          <p className='text-xs text-gray-400 mt-2'>
+            You can only register one route per vehicle
+          </p>
+        )}
       </div>
     </div>
   )

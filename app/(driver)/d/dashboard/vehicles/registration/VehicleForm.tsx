@@ -4,7 +4,11 @@ import { useFormStatus } from 'react-dom'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 
-export function SubmitButton() {
+interface SubmitButtonProps {
+  isUpdateMode?: boolean
+}
+
+export function SubmitButton({ isUpdateMode = false }: SubmitButtonProps) {
   const { pending } = useFormStatus()
 
   return (
@@ -16,8 +20,10 @@ export function SubmitButton() {
       {pending ? (
         <>
           <Loader2 className='w-5 h-5 mr-2 animate-spin' />
-          Registering...
+          {isUpdateMode ? 'Updating...' : 'Registering...'}
         </>
+      ) : isUpdateMode ? (
+        'Update Vehicle'
       ) : (
         'Register Vehicle'
       )}

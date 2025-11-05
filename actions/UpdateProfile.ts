@@ -43,28 +43,47 @@ export async function updateProfile(formData: FormData) {
   const address = formData.get('address') as string
   const city = formData.get('city') as string
   const state = formData.get('state') as string
-  const pincode = formData.get('pincode') as string
-  const licenseNumber = formData.get('licenseNumber') as string
+  const driverId = formData.get('driverId') as string
+  const driverLicenseNumber = formData.get('driverLicenseNumber') as string
+  const carLicenseNumber = formData.get('carLicenseNumber') as string
   const dateOfBirth = formData.get('dateOfBirth') as string
 
   // Handle file uploads
-  const licenseDocument = formData.get('licenseDocument') as File
+  const driverIdDocument = formData.get('driverIdDocument') as File
+  const driverLicenseDocument = formData.get('driverLicenseDocument') as File
+  const carLicenseDocument = formData.get('carLicenseDocument') as File
   const criminalRecord = formData.get('criminalRecord') as File
   const drugReport = formData.get('drugReport') as File
   const formalPhoto = formData.get('formalPhoto') as File
 
   try {
-    let licenseDocumentPath = undefined
+    let driverIdDocumentPath = undefined
+    let driverLicenseDocumentPath = undefined
+    let carLicenseDocumentPath = undefined
     let criminalRecordPath = undefined
     let drugReportPath = undefined
     let formalPhotoPath = undefined
 
     // Save files if provided
-    if (licenseDocument && licenseDocument.size > 0) {
-      licenseDocumentPath = await saveFile(
-        licenseDocument,
+    if (driverIdDocument && driverIdDocument.size > 0) {
+      driverIdDocumentPath = await saveFile(
+        driverIdDocument,
         session.user.id,
-        'license'
+        'driver_id'
+      )
+    }
+    if (driverLicenseDocument && driverLicenseDocument.size > 0) {
+      driverLicenseDocumentPath = await saveFile(
+        driverLicenseDocument,
+        session.user.id,
+        'driver_license'
+      )
+    }
+    if (carLicenseDocument && carLicenseDocument.size > 0) {
+      carLicenseDocumentPath = await saveFile(
+        carLicenseDocument,
+        session.user.id,
+        'car_license'
       )
     }
     if (criminalRecord && criminalRecord.size > 0) {
@@ -89,10 +108,13 @@ export async function updateProfile(formData: FormData) {
         address: address || undefined,
         city: city || undefined,
         state: state || undefined,
-        pincode: pincode || undefined,
-        licenseNumber: licenseNumber || undefined,
+        driverId: driverId || undefined,
+        driverLicenseNumber: driverLicenseNumber || undefined,
+        carLicenseNumber: carLicenseNumber || undefined,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-        licenseDocument: licenseDocumentPath || undefined,
+        driverIdDocument: driverIdDocumentPath || undefined,
+        driverLicenseDocument: driverLicenseDocumentPath || undefined,
+        carLicenseDocument: carLicenseDocumentPath || undefined,
         criminalRecord: criminalRecordPath || undefined,
         drugReport: drugReportPath || undefined,
         formalPhoto: formalPhotoPath || undefined,

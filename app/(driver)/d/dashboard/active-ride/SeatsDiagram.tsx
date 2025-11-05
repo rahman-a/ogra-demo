@@ -1,7 +1,12 @@
 'use client'
 
-import React from 'react'
-import { User } from 'lucide-react'
+import React, { useState } from 'react'
+import CarSeat from '@/icons/CarSeat'
+import ChildSeatFilled from '@/icons/CarSeatFilled'
+import { Button } from '@/components/ui/button'
+import { DollarSign, X, Loader2 } from 'lucide-react'
+import { createManualBooking } from '@/actions/ManualBooking'
+import { toast } from 'sonner'
 
 type Seat = {
   id: string
@@ -23,11 +28,20 @@ type Props = {
   seats: Seat[]
   bookings: Booking[]
   capacity: number
+  rideId: string
+  pricePerSeat: number
 }
 
-export function SeatsDiagram({ seats, bookings, capacity }: Props) {
-  // Calculate seats per row (typical bus/van layout)
-  const seatsPerRow = capacity <= 7 ? 2 : 4 // 2 columns for small vehicles, 4 for larger
+export function SeatsDiagram({
+  seats,
+  bookings,
+  rideId,
+  pricePerSeat,
+}: Props) {
+  const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null)
+  const [loading, setLoading] = useState(false)
+  // Fixed layout: 3 seats per row
+  const seatsPerRow = 3
 
   // Group seats into rows
   const rows: Seat[][] = []
@@ -62,24 +76,73 @@ export function SeatsDiagram({ seats, bookings, capacity }: Props) {
     }
   }
 
+  // Handle seat click for manual booking
+  const handleSeatClick = (seat: Seat) => {
+    // Only allow clicking available seats (not driver seat)
+    if (seat.status === 'AVAILABLE' && seat.seatNumber !== 1) {
+      setSelectedSeat(seat)
+    }
+  }
+
+  // Handle manual booking confirmation
+  const handleConfirmManualBooking = async () => {
+    if (!selectedSeat) return
+
+    setLoading(true)
+    const loadingToast = toast.loading('Marking seat as paid...')
+
+    try {
+      const result = await createManualBooking(rideId, selectedSeat.id)
+
+      toast.dismiss(loadingToast)
+
+      if (result.success) {
+        toast.success('Success!', {
+          description: result.message,
+          duration: 5000,
+        })
+        setSelectedSeat(null)
+      } else {
+        toast.error('Failed', {
+          description: result.message,
+          duration: 5000,
+        })
+      }
+    } catch (error) {
+      toast.dismiss(loadingToast)
+      toast.error('Error', {
+        description: 'Failed to process manual booking',
+        duration: 5000,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCloseModal = () => {
+    if (!loading) {
+      setSelectedSeat(null)
+    }
+  }
+
   return (
     <div className='w-full max-w-2xl mx-auto'>
       {/* Legend */}
       <div className='flex justify-center gap-4 mb-6 text-sm flex-wrap'>
         <div className='flex items-center gap-2'>
-          <div className='w-4 h-4 bg-gray-600 rounded border-2 border-gray-700' />
+          <ChildSeatFilled className='w-5 h-5 fill-gray-600' />
           <span className='text-gray-700'>Driver</span>
         </div>
         <div className='flex items-center gap-2'>
-          <div className='w-4 h-4 bg-red-500 rounded border-2 border-red-600' />
+          <ChildSeatFilled className='w-5 h-5 fill-red-500' />
           <span className='text-gray-700'>Available</span>
         </div>
         <div className='flex items-center gap-2'>
-          <div className='w-4 h-4 bg-green-500 rounded border-2 border-green-600' />
+          <ChildSeatFilled className='w-5 h-5 fill-green-500' />
           <span className='text-gray-700'>Occupied</span>
         </div>
         <div className='flex items-center gap-2'>
-          <div className='w-4 h-4 bg-gray-400 rounded border-2 border-gray-500' />
+          <ChildSeatFilled className='w-5 h-5 fill-gray-400' />
           <span className='text-gray-700'>Maintenance</span>
         </div>
       </div>
@@ -92,12 +155,12 @@ export function SeatsDiagram({ seats, bookings, capacity }: Props) {
       </div>
 
       {/* Seats Grid */}
-      <div className='bg-white rounded-2xl shadow-xl p-6 border-4 border-gray-300'>
-        <div className='space-y-4'>
+      <div className='bg-white rounded-2xl shadow-xl p-6 border-4 border-gray-300 max-w-md mx-auto'>
+        <div className='space-y-3'>
           {rows.map((row, rowIndex) => (
             <div
               key={rowIndex}
-              className='grid gap-4'
+              className='grid gap-3'
               style={{
                 gridTemplateColumns: `repeat(${seatsPerRow}, minmax(0, 1fr))`,
               }}
@@ -110,48 +173,55 @@ export function SeatsDiagram({ seats, bookings, capacity }: Props) {
                 return (
                   <div
                     key={seat.id}
+                    onClick={() => handleSeatClick(seat)}
                     className={`
-                      relative aspect-square rounded-lg border-2 
+                      relative aspect-square max-w-[90px] mx-auto rounded-2xl 
                       ${getSeatColor(seat)}
                       transition-all duration-200 
                       flex flex-col items-center justify-center
                       ${
                         seat.status === 'AVAILABLE' && !isDriverSeat
-                          ? 'cursor-pointer shadow-md'
+                          ? 'cursor-pointer shadow-md hover:scale-105 active:scale-95'
                           : 'shadow-sm'
                       }
                     `}
                   >
-                    {/* Seat Number */}
-                    <div className='absolute top-1 left-1 bg-white/90 text-gray-800 text-xs font-bold rounded px-1.5 py-0.5'>
+                    {/* Seat Number Badge */}
+                    <div className='absolute top-1 left-1 bg-white/95 text-gray-800 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-sm z-10'>
                       {seat.seatNumber}
                     </div>
 
-                    {/* Driver Seat Label */}
+                    {/* Driver Seat */}
                     {isDriverSeat ? (
-                      <div className='flex flex-col items-center justify-center text-white text-center'>
-                        <User className='w-8 h-8 mb-1' />
-                        <span className='text-xs font-bold'>DRIVER</span>
+                      <div className='flex flex-col items-center justify-center text-white text-center size-20'>
+                        <ChildSeatFilled className='size-12 fill-current' />
+                        <span className='text-[10px] font-bold mt-0.5'>
+                          DRIVER
+                        </span>
                       </div>
                     ) : isOccupied && passengerName ? (
-                      /* Passenger Info */
-                      <div className='flex flex-col items-center justify-center text-white text-center px-2'>
-                        <User className='w-6 h-6 mb-1' />
-                        <span className='text-xs font-semibold leading-tight'>
+                      /* Occupied Seat - User Sitting on Chair */
+                      <div className='flex flex-col items-center justify-center text-white text-center px-1 size-20'>
+                        <ChildSeatFilled className='size-12 fill-current' />
+                        <span className='text-[10px] font-semibold leading-tight bg-white/20 px-1.5 py-0.5 rounded-full mt-0.5'>
                           {passengerName.split(' ')[0]}
                         </span>
                       </div>
-                    ) : (
-                      /* Available Seat Icon */
-                      <div className='text-white'>
-                        <User className='w-8 h-8' />
+                    ) : seat.status === 'AVAILABLE' ? (
+                      /* Available Empty Chair */
+                      <div className='flex flex-col items-center justify-center text-white size-20'>
+                        <ChildSeatFilled className='size-12 fill-current' />
+                        <span className='text-[10px] font-medium mt-0.5 opacity-80'>
+                          Empty
+                        </span>
                       </div>
-                    )}
-
-                    {/* Maintenance Label */}
-                    {seat.status === 'ON_MAINTENANCE' && !isDriverSeat && (
-                      <div className='absolute bottom-1 text-xs text-white font-semibold'>
-                        Maintenance
+                    ) : (
+                      /* Maintenance Chair */
+                      <div className='flex flex-col items-center justify-center text-white size-20'>
+                        <CarSeat className='size-12 fill-current' />
+                        <span className='text-[10px] font-semibold mt-0.5'>
+                          Maintenance
+                        </span>
                       </div>
                     )}
                   </div>
@@ -168,6 +238,90 @@ export function SeatsDiagram({ seats, bookings, capacity }: Props) {
           BACK
         </div>
       </div>
+
+      {/* Click Instruction */}
+      <div className='text-center mt-4 text-sm text-gray-600'>
+        <p className='font-medium'>
+          💰 Click on any available (red) seat to mark as paid (cash)
+        </p>
+      </div>
+
+      {/* Manual Booking Confirmation Modal */}
+      {selectedSeat && (
+        <div className='fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4'>
+          <div className='bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl'>
+            <div className='flex items-center justify-between mb-4'>
+              <h3 className='text-xl font-bold text-gray-800'>
+                Confirm Cash Payment
+              </h3>
+              <Button
+                variant='ghost'
+                size='icon'
+                onClick={handleCloseModal}
+                disabled={loading}
+                className='rounded-full'
+              >
+                <X className='w-6 h-6' />
+              </Button>
+            </div>
+
+            <div className='mb-6'>
+              <div className='bg-blue-50 rounded-xl p-4 mb-4'>
+                <div className='text-center'>
+                  <div className='text-4xl font-bold text-blue-600 mb-1'>
+                    Seat #{selectedSeat.seatNumber}
+                  </div>
+                  <div className='text-sm text-gray-600'>
+                    Passenger paying in cash
+                  </div>
+                </div>
+              </div>
+
+              <div className='bg-green-50 rounded-xl p-4 border-2 border-green-200'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-gray-700 font-medium'>Amount:</span>
+                  <span className='text-2xl font-bold text-green-600'>
+                    E£{pricePerSeat.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              <p className='text-sm text-gray-500 mt-4 text-center'>
+                This will mark the seat as occupied and add E£
+                {pricePerSeat.toFixed(2)} to your ride earnings
+              </p>
+            </div>
+
+            <div className='space-y-2'>
+              <Button
+                onClick={handleConfirmManualBooking}
+                disabled={loading}
+                className='w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold'
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className='w-5 h-5 mr-2 animate-spin' />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <DollarSign className='w-5 h-5 mr-2' />
+                    Confirm Payment Received
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleCloseModal}
+                disabled={loading}
+                variant='outline'
+                className='w-full h-12'
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

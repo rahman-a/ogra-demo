@@ -43,7 +43,12 @@ export default async function ActiveRidePage({}: Props) {
                 where: {
                   status: 'CONFIRMED',
                 },
-                include: {
+                select: {
+                  id: true,
+                  passengerId: true,
+                  seatId: true,
+                  totalPrice: true,
+                  status: true,
                   passenger: {
                     select: {
                       name: true,
@@ -72,7 +77,15 @@ export default async function ActiveRidePage({}: Props) {
 
   const activeRide = vehicle.route.rides[0]
   const bookedSeatsCount = vehicle.capacity - activeRide.availableSeats
-  const totalEarnings = bookedSeatsCount * vehicle.route.pricePerSeat
+
+  // Filter out manual bookings (where passenger is the driver)
+  const appBookings = activeRide.bookings.filter(
+    (booking) => booking.passengerId !== session.user.id
+  )
+
+  // Total earnings only from app bookings (cash payments already received by driver)
+  const totalEarnings = appBookings.length * vehicle.route.pricePerSeat
+  const cashBookingsCount = bookedSeatsCount - appBookings.length
 
   // Calculate ride duration
   const rideStartTime = new Date(activeRide.departureTime)
@@ -84,7 +97,7 @@ export default async function ActiveRidePage({}: Props) {
   return (
     <div className='min-h-screen bg-linear-to-b from-blue-50 to-white pb-20'>
       {/* Header */}
-      <div className='bg-white shadow-sm sticky top-0 z-10'>
+      <div className='bg-white shadow-sm sticky top-0 z-30'>
         <div className='max-w-4xl mx-auto px-4 py-3 flex items-center justify-between'>
           <Link href='/d/dashboard'>
             <Button variant='ghost' size='icon' className='rounded-full'>
@@ -149,10 +162,19 @@ export default async function ActiveRidePage({}: Props) {
                 <TrendingUp className='w-5 h-5' />
               </div>
               <div>
-                <p className='text-xs opacity-90'>Earnings</p>
+                <p className='text-xs opacity-90'>App Earnings</p>
                 <p className='font-bold text-lg'>
                   E£{totalEarnings.toFixed(0)}
                 </p>
+                {cashBookingsCount > 0 && (
+                  <p className='text-[10px] opacity-75'>
+                    +E£
+                    {(cashBookingsCount * vehicle.route.pricePerSeat).toFixed(
+                      0
+                    )}{' '}
+                    cash
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -171,17 +193,19 @@ export default async function ActiveRidePage({}: Props) {
             seats={vehicle.seats}
             bookings={activeRide.bookings}
             capacity={vehicle.capacity}
+            rideId={activeRide.id}
+            pricePerSeat={vehicle.route.pricePerSeat}
           />
         </div>
 
-        {/* Passengers List */}
-        {activeRide.bookings.length > 0 && (
+        {/* Passengers List - App Bookings Only */}
+        {appBookings.length > 0 && (
           <div className='mb-6'>
             <h2 className='text-xl font-bold text-gray-800 mb-4'>
-              Passengers ({activeRide.bookings.length})
+              App Passengers ({appBookings.length})
             </h2>
             <div className='bg-white rounded-2xl shadow-lg p-4 space-y-3'>
-              {activeRide.bookings.map((booking, index) => (
+              {appBookings.map((booking, index) => (
                 <div
                   key={booking.id}
                   className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'
@@ -219,8 +243,29 @@ export default async function ActiveRidePage({}: Props) {
           </div>
         )}
 
+        {/* Manual Bookings Info */}
+        {cashBookingsCount > 0 && (
+          <div className='mb-6'>
+            <div className='bg-blue-50 border-2 border-blue-200 rounded-2xl p-4'>
+              <div className='text-center'>
+                <p className='text-sm text-blue-800 mb-1'>
+                  <span className='font-bold'>💵 {cashBookingsCount}</span>{' '}
+                  seat(s) booked via cash payment
+                </p>
+                <p className='text-xs text-blue-600'>
+                  Cash received: E£
+                  {(cashBookingsCount * vehicle.route.pricePerSeat).toFixed(
+                    2
+                  )}{' '}
+                  (already in your pocket)
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Complete Ride Button */}
-        <div className='sticky bottom-4'>
+        <div className='sticky bottom-4 z-50'>
           <form action={completeRide}>
             <input type='hidden' name='rideId' value={activeRide.id} />
             <Button
@@ -228,7 +273,14 @@ export default async function ActiveRidePage({}: Props) {
               className='w-full h-14 bg-green-600 hover:bg-green-700 text-white text-lg font-bold rounded-xl shadow-lg flex items-center justify-center gap-2'
             >
               <CheckCircle className='w-6 h-6' />
-              Complete Ride & Receive E£{totalEarnings.toFixed(0)}
+              {totalEarnings > 0
+                ? `Complete Ride & Receive E£${totalEarnings.toFixed(0)}`
+                : 'Complete Ride'}
+              {/* {cashBookingsCount > 0 && totalEarnings > 0 && (
+                <span className='text-xs opacity-80'>
+                  +E£{(cashBookingsCount * vehicle.route.pricePerSeat).toFixed(0)} cash
+                </span>
+              )} */}
             </Button>
           </form>
         </div>

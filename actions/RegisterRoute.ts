@@ -22,11 +22,8 @@ export async function registerRoute(formData: FormData) {
     throw new Error('You need to register a vehicle first')
   }
 
-  if (vehicle.route) {
-    throw new Error(
-      'You can only register one route for your vehicle. Please update your existing route instead.'
-    )
-  }
+  const existingRoute = vehicle.route
+  const isUpdateMode = !!existingRoute
 
   const origin = formData.get('origin') as string
   const destination = formData.get('destination') as string
@@ -62,23 +59,42 @@ export async function registerRoute(formData: FormData) {
   }
 
   try {
-    await prisma.route.create({
-      data: {
-        vehicleId: vehicle.id,
-        origin: origin.trim(),
-        destination: destination.trim(),
-        pricePerSeat: price,
-        distance: distanceNum,
-        duration: durationNum,
-        description: description?.trim() || null,
-      },
-    })
+    if (isUpdateMode) {
+      // Update existing route
+      await prisma.route.update({
+        where: { id: existingRoute.id },
+        data: {
+          origin: origin.trim(),
+          destination: destination.trim(),
+          pricePerSeat: price,
+          distance: distanceNum,
+          duration: durationNum,
+          description: description?.trim() || null,
+        },
+      })
+    } else {
+      // Create new route
+      await prisma.route.create({
+        data: {
+          vehicleId: vehicle.id,
+          origin: origin.trim(),
+          destination: destination.trim(),
+          pricePerSeat: price,
+          distance: distanceNum,
+          duration: durationNum,
+          description: description?.trim() || null,
+        },
+      })
+    }
   } catch (error) {
-    console.error('Route registration error:', error)
-    throw new Error('Failed to register route')
+    console.error('Route registration/update error:', error)
+    throw new Error(
+      isUpdateMode ? 'Failed to update route' : 'Failed to register route'
+    )
   }
 
   // Revalidate and redirect
   revalidatePath('/d/dashboard')
+  revalidatePath('/d/dashboard/routes/registration')
   redirect('/d/dashboard')
 }

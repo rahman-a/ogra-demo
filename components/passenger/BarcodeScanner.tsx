@@ -2,10 +2,17 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { QrCode, X, Camera, Loader2 } from 'lucide-react'
-import { scanBarcode, type ScanResult } from '@/actions/ScanBarcode'
+import { QrCode, X, Camera, Loader2, Keyboard, Car } from 'lucide-react'
+import {
+  scanBarcode,
+  bookBySeatCode,
+  bookByPlateNumber,
+  type ScanResult,
+} from '@/actions/ScanBarcode'
 import { Html5Qrcode } from 'html5-qrcode'
 import { toast } from 'sonner'
+
+type InputMethod = 'camera' | 'seatCode' | 'plateNumber'
 
 interface BarcodeScannerProps {
   onScanSuccess: (result: ScanResult) => void
@@ -17,15 +24,18 @@ export function BarcodeScanner({
   onScanError,
 }: BarcodeScannerProps) {
   const [isScanning, setIsScanning] = useState(false)
-  const [manualInput, setManualInput] = useState('')
+  const [inputMethod, setInputMethod] = useState<InputMethod>('camera')
+  const [seatCodeInput, setSeatCodeInput] = useState('')
+  const [plateNumberInput, setPlateNumberInput] = useState('')
+  const [seatNumberInput, setSeatNumberInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [cameraLoading, setCameraLoading] = useState(false)
-  const [useCameraScanner, setUseCameraScanner] = useState(false)
+  const [cameraActive, setCameraActive] = useState(false)
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const scannerDivId = 'qr-reader'
 
   useEffect(() => {
-    if (useCameraScanner && isScanning) {
+    if (inputMethod === 'camera' && cameraActive && isScanning) {
       startCameraScanner()
     }
 
@@ -33,7 +43,7 @@ export function BarcodeScanner({
       stopCameraScanner()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useCameraScanner, isScanning])
+  }, [inputMethod, cameraActive, isScanning])
 
   const startCameraScanner = async () => {
     setCameraLoading(true)
@@ -76,7 +86,7 @@ export function BarcodeScanner({
         duration: 5000,
       })
       onScanError('Failed to start camera. Please use manual entry.')
-      setUseCameraScanner(false)
+      setCameraActive(false)
     }
   }
 
@@ -123,8 +133,10 @@ export function BarcodeScanner({
         }
         onScanSuccess(result)
         setIsScanning(false)
-        setUseCameraScanner(false)
-        setManualInput('')
+        setCameraActive(false)
+        setSeatCodeInput('')
+        setPlateNumberInput('')
+        setSeatNumberInput('')
       } else {
         // Show error toast
         toast.error('Scan failed', {
@@ -148,18 +160,126 @@ export function BarcodeScanner({
     }
   }
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleSeatCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (manualInput.trim()) {
-      handleScan(manualInput.trim())
+    if (!seatCodeInput.trim() || loading) return
+
+    // Show loading toast
+    const loadingToast = toast.loading('Processing seat code...')
+
+    setLoading(true)
+    try {
+      const result = await bookBySeatCode(seatCodeInput.trim())
+      console.log('seat code result: ', result)
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast)
+
+      if (result.success) {
+        if (result.autoBooked) {
+          toast.success('Seat booked successfully!', {
+            description: result.message,
+            duration: 5000,
+          })
+        } else {
+          toast.info('Route validated', {
+            description: result.message,
+            duration: 3000,
+          })
+        }
+        onScanSuccess(result)
+        setIsScanning(false)
+        setSeatCodeInput('')
+        setSeatNumberInput('')
+      } else {
+        toast.error('Failed', {
+          description: result.message,
+          duration: 5000,
+        })
+        onScanError(result.message)
+      }
+    } catch {
+      toast.dismiss(loadingToast)
+      toast.error('Processing failed', {
+        description: 'Failed to process seat code. Please try again.',
+        duration: 5000,
+      })
+      onScanError('Failed to process seat code')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePlateNumberSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!plateNumberInput.trim() || !seatNumberInput.trim() || loading) return
+
+    // Show loading toast
+    const loadingToast = toast.loading('Processing plate number...')
+
+    setLoading(true)
+    try {
+      // Parse seat number
+      const seatNum = parseInt(seatNumberInput.trim(), 10)
+
+      if (isNaN(seatNum) || seatNum < 1) {
+        toast.dismiss(loadingToast)
+        toast.error('Invalid seat number', {
+          description: 'Please enter a valid seat number (1 or greater).',
+          duration: 5000,
+        })
+        setLoading(false)
+        return
+      }
+
+      const result = await bookByPlateNumber(plateNumberInput.trim(), seatNum)
+      console.log('plate number result: ', result)
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast)
+
+      if (result.success) {
+        if (result.autoBooked) {
+          toast.success('Seat booked successfully!', {
+            description: result.message,
+            duration: 5000,
+          })
+        } else {
+          toast.info('Route validated', {
+            description: result.message,
+            duration: 3000,
+          })
+        }
+        onScanSuccess(result)
+        setIsScanning(false)
+        setPlateNumberInput('')
+        setSeatNumberInput('')
+      } else {
+        toast.error('Failed', {
+          description: result.message,
+          duration: 5000,
+        })
+        onScanError(result.message)
+      }
+    } catch {
+      toast.dismiss(loadingToast)
+      toast.error('Processing failed', {
+        description: 'Failed to process plate number. Please try again.',
+        duration: 5000,
+      })
+      onScanError('Failed to process plate number')
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleClose = () => {
     stopCameraScanner()
     setIsScanning(false)
-    setUseCameraScanner(false)
-    setManualInput('')
+    setCameraActive(false)
+    setSeatCodeInput('')
+    setPlateNumberInput('')
+    setSeatNumberInput('')
   }
 
   if (!isScanning) {
@@ -178,7 +298,7 @@ export function BarcodeScanner({
     <div className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4'>
       <div className='bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto'>
         <div className='flex items-center justify-between mb-6'>
-          <h2 className='text-xl font-bold text-gray-800'>Scan Barcode</h2>
+          <h2 className='text-xl font-bold text-gray-800'>Book Your Seat</h2>
           <Button
             variant='ghost'
             size='icon'
@@ -189,103 +309,231 @@ export function BarcodeScanner({
           </Button>
         </div>
 
-        {/* Camera Scanner Option */}
-        {!useCameraScanner ? (
-          <div className='mb-6'>
-            <Button
-              type='button'
-              variant='default'
-              className='w-full h-14 bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 mb-4'
-              onClick={() => setUseCameraScanner(true)}
-              disabled={loading}
-            >
-              <Camera className='w-5 h-5 mr-2' />
-              Open Camera Scanner
-            </Button>
-          </div>
-        ) : (
-          <div className='mb-6'>
-            {/* Camera Scanner */}
-            <div className='mb-4'>
-              {cameraLoading ? (
-                <div className='bg-gray-200 rounded-xl h-64 flex items-center justify-center'>
-                  <div className='text-center'>
-                    <Loader2 className='w-12 h-12 text-blue-500 animate-spin mx-auto mb-2' />
-                    <p className='text-sm text-gray-600'>Starting camera...</p>
-                  </div>
+        {/* Method Selection Tabs */}
+        <div className='grid grid-cols-3 gap-2 mb-6'>
+          <Button
+            type='button'
+            variant={inputMethod === 'camera' ? 'default' : 'outline'}
+            onClick={() => {
+              setInputMethod('camera')
+              setCameraActive(false)
+            }}
+            disabled={loading}
+            className='flex flex-col items-center gap-1 h-auto py-3'
+          >
+            <Camera className='w-5 h-5' />
+            <span className='text-xs'>Camera</span>
+          </Button>
+          <Button
+            type='button'
+            variant={inputMethod === 'seatCode' ? 'default' : 'outline'}
+            onClick={() => {
+              setInputMethod('seatCode')
+              stopCameraScanner()
+              setCameraActive(false)
+            }}
+            disabled={loading}
+            className='flex flex-col items-center gap-1 h-auto py-3'
+          >
+            <Keyboard className='w-5 h-5' />
+            <span className='text-xs'>Seat Code</span>
+          </Button>
+          <Button
+            type='button'
+            variant={inputMethod === 'plateNumber' ? 'default' : 'outline'}
+            onClick={() => {
+              setInputMethod('plateNumber')
+              stopCameraScanner()
+              setCameraActive(false)
+            }}
+            disabled={loading}
+            className='flex flex-col items-center gap-1 h-auto py-3'
+          >
+            <Car className='w-5 h-5' />
+            <span className='text-xs'>Plate No.</span>
+          </Button>
+        </div>
+
+        {/* Camera Scanner */}
+        {inputMethod === 'camera' && (
+          <div className='mb-4'>
+            {!cameraActive ? (
+              <div className='text-center py-8'>
+                <Camera className='w-16 h-16 text-gray-400 mx-auto mb-4' />
+                <p className='text-sm text-gray-600 mb-4'>
+                  Use your camera to scan the QR code on your seat
+                </p>
+                <Button
+                  type='button'
+                  variant='default'
+                  className='w-full h-14 bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                  onClick={() => setCameraActive(true)}
+                  disabled={loading}
+                >
+                  <Camera className='w-5 h-5 mr-2' />
+                  Start Camera
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <div className='mb-4'>
+                  {cameraLoading ? (
+                    <div className='bg-gray-200 rounded-xl h-64 flex items-center justify-center'>
+                      <div className='text-center'>
+                        <Loader2 className='w-12 h-12 text-blue-500 animate-spin mx-auto mb-2' />
+                        <p className='text-sm text-gray-600'>
+                          Starting camera...
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      id={scannerDivId}
+                      className='rounded-xl overflow-hidden border-4 border-blue-500'
+                    />
+                  )}
                 </div>
-              ) : (
-                <div
-                  id={scannerDivId}
-                  className='rounded-xl overflow-hidden border-4 border-blue-500'
-                />
-              )}
-            </div>
 
-            <Button
-              type='button'
-              variant='outline'
-              className='w-full'
-              onClick={() => {
-                stopCameraScanner()
-                setUseCameraScanner(false)
-              }}
-              disabled={loading}
-            >
-              Close Camera
-            </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='w-full'
+                  onClick={() => {
+                    stopCameraScanner()
+                    setCameraActive(false)
+                  }}
+                  disabled={loading}
+                >
+                  Close Camera
+                </Button>
 
-            <p className='text-xs text-gray-500 text-center mt-3'>
-              Position the barcode within the frame
-            </p>
+                <p className='text-xs text-gray-500 text-center mt-3'>
+                  Position the QR code within the frame
+                </p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Divider */}
-        <div className='relative mb-6'>
-          <div className='absolute inset-0 flex items-center'>
-            <div className='w-full border-t border-gray-300'></div>
-          </div>
-          <div className='relative flex justify-center text-sm'>
-            <span className='px-2 bg-white text-gray-500'>
-              Or enter manually
-            </span>
-          </div>
-        </div>
+        {/* Seat Code Input */}
+        {inputMethod === 'seatCode' && (
+          <div className='mb-4'>
+            <div className='text-center py-4 mb-4'>
+              <Keyboard className='w-16 h-16 text-gray-400 mx-auto mb-4' />
+              <p className='text-sm text-gray-600'>
+                Enter the 14-digit code printed on your seat
+              </p>
+            </div>
 
-        {/* Manual Input */}
-        <div className='mb-4'>
-          <form onSubmit={handleManualSubmit} className='space-y-3'>
-            <label htmlFor='barcode-input' className='sr-only'>
-              Enter barcode manually
-            </label>
-            <input
-              id='barcode-input'
-              type='text'
-              value={manualInput}
-              onChange={(e) => setManualInput(e.target.value)}
-              placeholder='routeId:seatId (e.g., abc123:xyz789)'
-              className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-            />
-            <Button
-              type='submit'
-              className='w-full'
-              disabled={!manualInput.trim() || loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                  Processing...
-                </>
-              ) : (
-                'Submit'
-              )}
-            </Button>
-          </form>
-        </div>
+            <form onSubmit={handleSeatCodeSubmit} className='space-y-3'>
+              <label htmlFor='seat-code-input' className='sr-only'>
+                Enter 14-digit seat code
+              </label>
+              <input
+                id='seat-code-input'
+                type='text'
+                value={seatCodeInput}
+                onChange={(e) => setSeatCodeInput(e.target.value)}
+                placeholder='Enter 14-digit seat code'
+                maxLength={14}
+                className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-wider font-mono'
+              />
+              <div className='text-xs text-gray-500 text-center'>
+                {seatCodeInput.length}/14 characters
+              </div>
+              <Button
+                type='submit'
+                className='w-full h-12'
+                disabled={seatCodeInput.length !== 14 || loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                    Processing...
+                  </>
+                ) : (
+                  'Find & Book Seat'
+                )}
+              </Button>
+            </form>
+          </div>
+        )}
 
-        <p className='text-xs text-gray-500 text-center'>
-          Scan the barcode on your seat or enter the code manually
+        {/* Plate Number Input */}
+        {inputMethod === 'plateNumber' && (
+          <div className='mb-4'>
+            <div className='text-center py-4 mb-4'>
+              <Car className='w-16 h-16 text-gray-400 mx-auto mb-4' />
+              <p className='text-sm text-gray-600'>
+                Enter the vehicle&apos;s plate number and seat number to book
+              </p>
+            </div>
+
+            <form onSubmit={handlePlateNumberSubmit} className='space-y-3'>
+              <div>
+                <label
+                  htmlFor='plate-number-input'
+                  className='block text-sm font-medium text-gray-700 mb-1'
+                >
+                  Vehicle Plate Number *
+                </label>
+                <input
+                  id='plate-number-input'
+                  type='text'
+                  value={plateNumberInput}
+                  onChange={(e) =>
+                    setPlateNumberInput(e.target.value.toUpperCase())
+                  }
+                  placeholder='e.g., ABC1234'
+                  className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-wider font-mono uppercase'
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor='seat-number-input'
+                  className='block text-sm font-medium text-gray-700 mb-1'
+                >
+                  Seat Number *
+                </label>
+                <input
+                  id='seat-number-input'
+                  type='number'
+                  min='1'
+                  value={seatNumberInput}
+                  onChange={(e) => setSeatNumberInput(e.target.value)}
+                  placeholder='e.g., 5'
+                  className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg'
+                  required
+                />
+                <p className='text-xs text-gray-500 mt-1 text-center'>
+                  Enter the seat number you want to book
+                </p>
+              </div>
+
+              <Button
+                type='submit'
+                className='w-full h-12'
+                disabled={
+                  !plateNumberInput.trim() || !seatNumberInput.trim() || loading
+                }
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                    Processing...
+                  </>
+                ) : (
+                  'Find Vehicle & Book'
+                )}
+              </Button>
+            </form>
+          </div>
+        )}
+
+        <p className='text-xs text-gray-500 text-center mt-6'>
+          Choose your preferred method to book a seat
         </p>
       </div>
     </div>

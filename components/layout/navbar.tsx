@@ -70,6 +70,37 @@ export default async function Navbar({
   const pathname = headerList.get('x-current-path')
   const session = await getSession()
   const isExcluded = excludedRoutes.includes(pathname!)
+
+  // Build dynamic menu based on user role
+  const dynamicMenu = [...menu]
+
+  if (session?.user) {
+    // Add role-specific items for drivers
+    if (session.user.role === 'DRIVER') {
+      dynamicMenu.push(
+        {
+          title: 'Vehicle',
+          url: '/d/dashboard/vehicles/registration',
+        },
+        {
+          title: 'Route',
+          url: '/d/dashboard/routes/registration',
+        }
+      )
+    }
+
+    // Add profile for all authenticated users
+    const profileUrl =
+      session.user.role === 'DRIVER'
+        ? '/d/dashboard/profile'
+        : '/p/dashboard/profile'
+
+    dynamicMenu.push({
+      title: 'Profile',
+      url: profileUrl,
+    })
+  }
+
   return (
     <section
       className={cn('p-4', {
@@ -85,7 +116,7 @@ export default async function Navbar({
             <div className='flex items-center'>
               <NavigationMenu>
                 <NavigationMenuList>
-                  {menu.map((item) => renderMenuItem(item))}
+                  {dynamicMenu.map((item) => renderMenuItem(item))}
                 </NavigationMenuList>
               </NavigationMenu>
             </div>
@@ -142,7 +173,7 @@ export default async function Navbar({
                     collapsible
                     className='flex w-full flex-col gap-4'
                   >
-                    {menu.map((item) => renderMobileMenuItem(item))}
+                    {dynamicMenu.map((item) => renderMobileMenuItem(item))}
                   </Accordion>
 
                   <div className='flex flex-col gap-3'>
