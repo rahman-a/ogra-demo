@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { generateSeatCode } from '@/lib/generateSeatCode'
 
 export async function registerVehicle(formData: FormData) {
   const session = await auth()
@@ -61,11 +62,23 @@ export async function registerVehicle(formData: FormData) {
           })
 
           // Create new seats with updated capacity
-          const seatData = Array.from({ length: capacityNum }, (_, index) => ({
-            vehicleId: existingVehicle.id,
-            seatNumber: index + 1,
-            status: 'AVAILABLE' as const,
-          }))
+          // Generate unique seat codes
+          const generatedCodes = new Set<string>()
+          const seatData = Array.from({ length: capacityNum }, (_, index) => {
+            let code = generateSeatCode()
+            // Ensure code is unique within this batch
+            while (generatedCodes.has(code)) {
+              code = generateSeatCode()
+            }
+            generatedCodes.add(code)
+
+            return {
+              vehicleId: existingVehicle.id,
+              seatNumber: index + 1,
+              code,
+              status: 'AVAILABLE' as const,
+            }
+          })
 
           await tx.seat.createMany({
             data: seatData,
@@ -87,11 +100,23 @@ export async function registerVehicle(formData: FormData) {
         })
 
         // Create individual seats for the vehicle
-        const seatData = Array.from({ length: capacityNum }, (_, index) => ({
-          vehicleId: vehicle.id,
-          seatNumber: index + 1, // Seat numbers start from 1
-          status: 'AVAILABLE' as const,
-        }))
+        // Generate unique seat codes
+        const generatedCodes = new Set<string>()
+        const seatData = Array.from({ length: capacityNum }, (_, index) => {
+          let code = generateSeatCode()
+          // Ensure code is unique within this batch
+          while (generatedCodes.has(code)) {
+            code = generateSeatCode()
+          }
+          generatedCodes.add(code)
+
+          return {
+            vehicleId: vehicle.id,
+            seatNumber: index + 1, // Seat numbers start from 1
+            code,
+            status: 'AVAILABLE' as const,
+          }
+        })
 
         await tx.seat.createMany({
           data: seatData,
