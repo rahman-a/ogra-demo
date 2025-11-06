@@ -30,6 +30,8 @@ export async function updateSeatStatus(formData: FormData) {
   }
 
   try {
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     // Get the seat to verify ownership
     const seat = await prisma.seat.findUnique({
       where: { id: seatId },
@@ -54,8 +56,7 @@ export async function updateSeatStatus(formData: FormData) {
     })
 
     revalidatePath('/d/dashboard')
-    const lng = await getLocaleFromCookies()
-    const { t } = await getTranslation(lng, 'actions')
+
     return {
       success: true,
       message: t('success.seatStatusUpdated', {

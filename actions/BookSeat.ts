@@ -23,6 +23,8 @@ export async function bookSeat(formData: FormData) {
   }
 
   try {
+    let bookedSeatNumber: number | null = null
+
     await prisma.$transaction(async (tx) => {
       // Get the ride with route information
       const ride = await tx.ride.findUnique({
@@ -68,7 +70,6 @@ export async function bookSeat(formData: FormData) {
 
       // Variable to store the created booking and seat number
       let createdBooking
-      let bookedSeatNumber: number | null = null
 
       // If seatId is provided, validate and assign the seat
       if (seatId) {
@@ -93,7 +94,9 @@ export async function bookSeat(formData: FormData) {
 
         if (seat.status !== 'AVAILABLE') {
           throw new Error(
-            t('errors.seatNotAvailableStatus', { status: seat.status.toLowerCase() })
+            t('errors.seatNotAvailableStatus', {
+              status: seat.status.toLowerCase(),
+            })
           )
         }
 
