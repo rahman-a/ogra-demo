@@ -3,23 +3,27 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 export async function withdrawMoney(formData: FormData) {
+  const lng = await getLocaleFromCookies()
+  const { t } = await getTranslation(lng, 'actions')
   const session = await auth()
 
   if (!session || !session.user) {
-    throw new Error('You must be logged in')
+    throw new Error(t('errors.mustBeLoggedIn'))
   }
 
   const amount = formData.get('amount') as string
 
   if (!amount) {
-    throw new Error('Amount is required')
+    throw new Error(t('errors.amountRequired'))
   }
 
   const amountNum = parseFloat(amount)
   if (isNaN(amountNum) || amountNum <= 0) {
-    throw new Error('Amount must be a positive number')
+    throw new Error(t('errors.amountMustBePositive'))
   }
 
   try {
@@ -30,13 +34,15 @@ export async function withdrawMoney(formData: FormData) {
       })
 
       if (!wallet) {
-        throw new Error('Wallet not found. Please create a wallet first.')
+        throw new Error(t('errors.walletNotFound'))
       }
 
       // Check if balance is sufficient
       if (wallet.balance < amountNum) {
         throw new Error(
-          `Insufficient balance. Available: ${wallet.balance.toFixed(2)} EGP`
+          t('errors.insufficientBalanceAvailable', {
+            available: wallet.balance.toFixed(2),
+          })
         )
       }
 
@@ -66,11 +72,11 @@ export async function withdrawMoney(formData: FormData) {
 
     revalidatePath('/d/dashboard')
     revalidatePath('/p/dashboard')
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     return {
       success: true,
-      message: `Successfully withdrew ${amountNum.toFixed(
-        2
-      )} EGP from your wallet`,
+      message: t('success.withdrawSuccess', { amount: amountNum.toFixed(2) }),
     }
   } catch (error) {
     console.error('Withdraw money error:', error)

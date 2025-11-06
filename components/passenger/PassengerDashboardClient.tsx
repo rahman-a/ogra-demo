@@ -15,6 +15,8 @@ import { PaymentModal } from './PaymentModal'
 import { PassengerNavigation } from './PassengerNavigation'
 import type { ScanResult } from '@/actions/ScanBarcode'
 import { toast } from 'sonner'
+import { useTranslation } from '@/i18n/client'
+import type { Locale } from '@/i18n/settings'
 
 interface Booking {
   id: string
@@ -40,12 +42,15 @@ interface Booking {
 interface PassengerDashboardClientProps {
   bookings: Booking[]
   walletBalance: number
+  lng: Locale
 }
 
 export function PassengerDashboardClient({
   bookings,
   walletBalance,
+  lng,
 }: PassengerDashboardClientProps) {
+  const { t } = useTranslation(lng, 'dashboard')
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
 
@@ -53,8 +58,8 @@ export function PassengerDashboardClient({
     if (result.success && result.data) {
       if (result.autoBooked) {
         // Seat was automatically booked
-        toast.success('🎉 Booking confirmed!', {
-          description: `${result.message} - Refreshing dashboard...`,
+        toast.success(t('scanner.toast.seatBooked'), {
+          description: `${result.message}`,
           duration: 3000,
         })
         // Refresh the page to show updated bookings
@@ -64,8 +69,8 @@ export function PassengerDashboardClient({
       } else {
         // Show payment modal for insufficient balance or manual booking
         if (result.message.includes('Insufficient balance')) {
-          toast.warning('Insufficient balance', {
-            description: 'Please charge your wallet to complete booking.',
+          toast.warning(t('payment.insufficientBalance'), {
+            description: t('payment.insufficientBalance'),
             duration: 5000,
           })
         }
@@ -98,10 +103,10 @@ export function PassengerDashboardClient({
       {/* Header */}
       <div className='mb-6 pt-4'>
         <h1 className='text-2xl font-bold text-gray-800 text-center'>
-          Passenger Dashboard
+          {t('passenger.title')}
         </h1>
         <p className='text-center text-gray-600 mt-2'>
-          Book your ride and track your journeys
+          {t('passenger.subtitle')}
         </p>
       </div>
 
@@ -112,17 +117,23 @@ export function PassengerDashboardClient({
             <div>
               <div className='flex items-center gap-2 mb-2'>
                 <Wallet className='w-5 h-5' />
-                <span className='text-sm opacity-90'>Wallet Balance</span>
+                <span className='text-sm opacity-90'>
+                  {t('passenger.walletBalance')}
+                </span>
               </div>
               <div className='text-3xl font-bold'>
-                E£{walletBalance.toFixed(2)}
+                {lng === 'ar'
+                  ? `${walletBalance.toFixed(2)} ${t('currency.symbol')}`
+                  : `${t('currency.symbol')}${walletBalance.toFixed(2)}`}
               </div>
             </div>
             <Button
-              onClick={() => (window.location.href = '/p/dashboard/wallet')}
+              onClick={() =>
+                (window.location.href = `/${lng}/p/dashboard/wallet`)
+              }
               className='bg-white text-green-600 hover:bg-green-50'
             >
-              Charge
+              {t('charge')}
             </Button>
           </div>
         </div>
@@ -134,45 +145,56 @@ export function PassengerDashboardClient({
           <div className='text-2xl font-bold text-green-600'>
             {activeBookings.length}
           </div>
-          <div className='text-xs text-gray-500 mt-1'>Active</div>
+          <div className='text-xs text-gray-500 mt-1'>
+            {t('passenger.stats.active')}
+          </div>
         </div>
         <div className='bg-white rounded-xl shadow p-4 text-center'>
           <div className='text-2xl font-bold text-blue-600'>
             {completedBookings.length}
           </div>
-          <div className='text-xs text-gray-500 mt-1'>Completed</div>
+          <div className='text-xs text-gray-500 mt-1'>
+            {t('passenger.stats.completed')}
+          </div>
         </div>
         <div className='bg-white rounded-xl shadow p-4 text-center'>
           <div className='text-2xl font-bold text-purple-600'>
             {totalSpent.toFixed(0)}
           </div>
-          <div className='text-xs text-gray-500 mt-1'>Total E£</div>
+          <div className='text-xs text-gray-500 mt-1'>
+            {t('passenger.stats.totalSpent')}
+          </div>
         </div>
       </div>
 
       {/* Navigation Menu */}
-      <PassengerNavigation />
+      <PassengerNavigation lng={lng} />
 
       {/* Barcode Scanner Button */}
       <div className='max-w-md mx-auto mb-6'>
         <BarcodeScanner
           onScanSuccess={handleScanSuccess}
           onScanError={handleScanError}
+          lng={lng}
         />
       </div>
 
       {/* Recent Rides */}
       <div className='max-w-md mx-auto'>
         <div className='flex items-center justify-between mb-4'>
-          <h2 className='text-xl font-bold text-gray-800'>Recent Rides</h2>
+          <h2 className='text-xl font-bold text-gray-800'>
+            {t('recentRides')}
+          </h2>
           {bookings.length > 3 && (
             <Button
               variant='ghost'
               size='sm'
-              onClick={() => (window.location.href = '/p/dashboard/rides')}
+              onClick={() =>
+                (window.location.href = `/${lng}/p/dashboard/rides`)
+              }
               className='text-blue-600 hover:text-blue-700'
             >
-              View All →
+              {t('passenger.viewAll')}
             </Button>
           )}
         </div>
@@ -183,10 +205,10 @@ export function PassengerDashboardClient({
               <MapPin className='w-16 h-16 mx-auto' />
             </div>
             <h3 className='text-lg font-semibold text-gray-700 mb-2'>
-              No rides yet
+              {t('passenger.noRidesTitle')}
             </h3>
             <p className='text-sm text-gray-500'>
-              Scan a barcode to book your first ride
+              {t('passenger.noRidesDesc')}
             </p>
           </div>
         ) : (
@@ -218,7 +240,7 @@ export function PassengerDashboardClient({
                   </div>
                   {booking.seat && (
                     <div className='bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold'>
-                      Seat #{booking.seat.seatNumber}
+                      {t('passenger.seat')} #{booking.seat.seatNumber}
                     </div>
                   )}
                 </div>
@@ -263,9 +285,13 @@ export function PassengerDashboardClient({
 
                 {/* Price */}
                 <div className='flex items-center justify-between pt-3 border-t border-gray-100'>
-                  <span className='text-sm text-gray-600'>Price</span>
+                  <span className='text-sm text-gray-600'>
+                    {t('passenger.price')}
+                  </span>
                   <span className='text-lg font-bold text-green-600'>
-                    E£{booking.totalPrice.toFixed(2)}
+                    {lng === 'ar'
+                      ? `${booking.totalPrice.toFixed(2)} ${t('currency.symbol')}`
+                      : `${t('currency.symbol')}${booking.totalPrice.toFixed(2)}`}
                   </span>
                 </div>
               </div>
@@ -284,6 +310,7 @@ export function PassengerDashboardClient({
             activeRide: scanResult.data.activeRide,
           }}
           walletBalance={walletBalance}
+          lng={lng}
         />
       )}
     </div>

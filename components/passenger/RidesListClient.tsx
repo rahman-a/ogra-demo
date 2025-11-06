@@ -12,6 +12,8 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/i18n/client'
+import type { Locale } from '@/i18n/settings'
 
 interface Booking {
   id: string
@@ -39,6 +41,7 @@ interface RidesListClientProps {
   currentPage: number
   totalPages: number
   totalCount: number
+  lng: Locale
 }
 
 export function RidesListClient({
@@ -46,20 +49,22 @@ export function RidesListClient({
   currentPage,
   totalPages,
   totalCount,
+  lng,
 }: RidesListClientProps) {
+  const { t } = useTranslation(lng, 'rides')
   return (
     <div>
       {/* Stats Summary */}
       <div className='mb-6 bg-white rounded-xl shadow p-4'>
         <div className='flex items-center justify-between'>
           <div>
-            <p className='text-sm text-gray-500'>Total Rides</p>
+            <p className='text-sm text-gray-500'>{t('totalRides')}</p>
             <p className='text-2xl font-bold text-gray-800'>{totalCount}</p>
           </div>
           <div className='text-right'>
-            <p className='text-sm text-gray-500'>Page</p>
+            <p className='text-sm text-gray-500'>{t('page')}</p>
             <p className='text-2xl font-bold text-blue-600'>
-              {currentPage} / {totalPages}
+              {currentPage} {t('of')} {totalPages}
             </p>
           </div>
         </div>
@@ -72,10 +77,10 @@ export function RidesListClient({
             <MapPin className='w-16 h-16 mx-auto' />
           </div>
           <h3 className='text-lg font-semibold text-gray-700 mb-2'>
-            No rides found
+            {t('noRides')}
           </h3>
           <p className='text-sm text-gray-500'>
-            You don&apos;t have any rides yet
+            {t('noRides')}
           </p>
         </div>
       ) : (
@@ -103,11 +108,11 @@ export function RidesListClient({
                   ) : (
                     <XCircle className='w-3 h-3' />
                   )}
-                  {booking.status}
+                  {t(`bookingStatus.${booking.status}` as any)}
                 </div>
                 {booking.seat && (
                   <div className='bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold'>
-                    Seat #{booking.seat.seatNumber}
+                    {t('seat')} #{booking.seat.seatNumber}
                   </div>
                 )}
               </div>
@@ -149,7 +154,7 @@ export function RidesListClient({
 
               {/* Price */}
               <div className='flex items-center justify-between pt-3 border-t border-gray-100'>
-                <span className='text-sm text-gray-600'>Price</span>
+                <span className='text-sm text-gray-600'>{t('price')}</span>
                 <span className='text-lg font-bold text-green-600'>
                   E£{booking.totalPrice.toFixed(2)}
                 </span>
@@ -163,7 +168,7 @@ export function RidesListClient({
       {totalPages > 1 && (
         <div className='flex items-center justify-between bg-white rounded-xl shadow p-4'>
           <Link
-            href={`/p/dashboard/rides?page=${currentPage - 1}`}
+            href={`/${lng}/p/dashboard/rides?page=${currentPage - 1}`}
             className={currentPage <= 1 ? 'pointer-events-none' : ''}
           >
             <Button
@@ -173,7 +178,7 @@ export function RidesListClient({
               className='flex items-center gap-2'
             >
               <ChevronLeft className='w-4 h-4' />
-              Previous
+              {t('previousPage')}
             </Button>
           </Link>
 
@@ -186,7 +191,7 @@ export function RidesListClient({
                 (page >= currentPage - 1 && page <= currentPage + 1)
               ) {
                 return (
-                  <Link key={page} href={`/p/dashboard/rides?page=${page}`}>
+                  <Link key={page} href={`/${lng}/p/dashboard/rides?page=${page}`}>
                     <Button
                       variant={page === currentPage ? 'default' : 'outline'}
                       size='sm'
@@ -208,7 +213,7 @@ export function RidesListClient({
           </div>
 
           <Link
-            href={`/p/dashboard/rides?page=${currentPage + 1}`}
+            href={`/${lng}/p/dashboard/rides?page=${currentPage + 1}`}
             className={currentPage >= totalPages ? 'pointer-events-none' : ''}
           >
             <Button
@@ -217,7 +222,7 @@ export function RidesListClient({
               disabled={currentPage >= totalPages}
               className='flex items-center gap-2'
             >
-              Next
+              {t('nextPage')}
               <ChevronRight className='w-4 h-4' />
             </Button>
           </Link>

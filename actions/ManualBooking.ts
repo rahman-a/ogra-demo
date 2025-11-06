@@ -3,6 +3,8 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 export interface ManualBookingResult {
   success: boolean
@@ -19,13 +21,15 @@ export async function createManualBooking(
   seatId: string
 ): Promise<ManualBookingResult> {
   try {
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     const session = await auth()
 
     // Verify driver is logged in
     if (!session || !session.user) {
       return {
         success: false,
-        message: 'You must be logged in to create manual bookings',
+        message: t('errors.mustBeLoggedInToCreateManualBooking'),
       }
     }
 
@@ -38,7 +42,7 @@ export async function createManualBooking(
     if (!user || user.role !== 'DRIVER') {
       return {
         success: false,
-        message: 'Only drivers can create manual bookings',
+        message: t('errors.onlyDriversCanCreateManualBookings'),
       }
     }
 
@@ -63,7 +67,7 @@ export async function createManualBooking(
     if (!ride) {
       return {
         success: false,
-        message: 'Ride not found',
+        message: t('errors.rideNotFound'),
       }
     }
 
@@ -71,7 +75,7 @@ export async function createManualBooking(
     if (ride.status !== 'ACTIVE') {
       return {
         success: false,
-        message: 'Ride is not active',
+        message: t('errors.rideNotActive'),
       }
     }
 
@@ -79,7 +83,7 @@ export async function createManualBooking(
     if (ride.route.vehicle.userId !== session.user.id) {
       return {
         success: false,
-        message: 'You can only create manual bookings for your own vehicle',
+        message: t('errors.canOnlyCreateForOwnVehicle'),
       }
     }
 
@@ -88,7 +92,7 @@ export async function createManualBooking(
     if (!seat) {
       return {
         success: false,
-        message: 'Seat not found',
+        message: t('errors.seatNotFound'),
       }
     }
 
@@ -96,7 +100,7 @@ export async function createManualBooking(
     if (seat.status !== 'AVAILABLE') {
       return {
         success: false,
-        message: `Seat #${seat.seatNumber} is not available`,
+        message: t('errors.seatNotAvailable', { number: seat.seatNumber }),
       }
     }
 
@@ -113,7 +117,7 @@ export async function createManualBooking(
     if (existingBooking) {
       return {
         success: false,
-        message: `Seat #${seat.seatNumber} is already booked`,
+        message: t('errors.seatAlreadyBooked', { number: seat.seatNumber }),
       }
     }
 
@@ -121,7 +125,7 @@ export async function createManualBooking(
     if (ride.availableSeats <= 0) {
       return {
         success: false,
-        message: 'No available seats on this ride',
+        message: t('errors.noAvailableSeats'),
       }
     }
 
@@ -170,7 +174,7 @@ export async function createManualBooking(
 
       return {
         success: true,
-        message: `Seat #${seat.seatNumber} marked as paid (cash)`,
+        message: t('success.seatMarkedAsPaid', { number: seat.seatNumber }),
         booking: {
           id: booking.id,
           seatNumber: seat.seatNumber,
@@ -181,14 +185,16 @@ export async function createManualBooking(
       console.error('Manual booking error:', error)
       return {
         success: false,
-        message: 'Failed to create manual booking',
+        message: t('errors.failedToCreateManualBooking'),
       }
     }
   } catch (error) {
     console.error('Manual booking error:', error)
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     return {
       success: false,
-      message: 'Failed to process manual booking',
+      message: t('errors.failedToProcessManualBooking'),
     }
   }
 }

@@ -3,6 +3,9 @@ import Credentials from 'next-auth/providers/credentials'
 import { prisma } from './lib/prisma'
 import bcrypt from 'bcryptjs'
 import { Role } from '@prisma/client'
+import { cookies } from 'next/headers'
+import { getTranslation } from './i18n'
+import { fallbackLng, type Locale } from './i18n/settings'
 
 declare module 'next-auth' {
   /**
@@ -20,7 +23,10 @@ declare module 'next-auth' {
 }
 
 class InvalidLoginError extends CredentialsSignin {
-  code = 'Invalid identifier or password'
+  constructor(message?: string) {
+    super()
+    this.code = message || 'Invalid identifier or password'
+  }
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -31,15 +37,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
+        // Get locale from cookies for translation
+        const cookieStore = await cookies()
+        const locale = (cookieStore.get('i18next')?.value ||
+          fallbackLng) as Locale
+        const { t } = await getTranslation(locale, 'auth')
+
         const { email, password } = credentials as {
           email: string
           password: string
         }
-        if (!email || !password) throw new InvalidLoginError()
+        if (!email || !password)
+          throw new InvalidLoginError(t('signin.invalidCredentials'))
         const user = await prisma.user.findUnique({ where: { email } })
-        if (!user) throw new InvalidLoginError()
+        if (!user) throw new InvalidLoginError(t('signin.invalidCredentials'))
         const isMatch = await bcrypt.compare(password as string, user.password)
-        if (!isMatch) throw new InvalidLoginError()
+        if (!isMatch)
+          throw new InvalidLoginError(t('signin.invalidCredentials'))
         return {
           id: user.id,
           email: user.email,

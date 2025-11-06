@@ -13,6 +13,8 @@ import { CreditCard, Wallet, MapPin, ArrowRight, Loader2 } from 'lucide-react'
 import { bookSeat } from '@/actions/BookSeat'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTranslation } from '@/i18n/client'
+import type { Locale } from '@/i18n/settings'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -39,6 +41,7 @@ interface PaymentModalProps {
     }
   }
   walletBalance?: number
+  lng: Locale
 }
 
 export function PaymentModal({
@@ -46,10 +49,12 @@ export function PaymentModal({
   onClose,
   rideData,
   walletBalance = 0,
+  lng,
 }: PaymentModalProps) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const { t } = useTranslation(lng, 'dashboard')
 
   const handlePayment = async () => {
     setError(null)
@@ -65,8 +70,10 @@ export function PaymentModal({
         await bookSeat(formData)
 
         // Success - show toast and refresh
-        toast.success('🎉 Payment successful!', {
-          description: `Seat #${rideData.seat?.seatNumber} booked successfully`,
+        toast.success(t('payment.toast.success'), {
+          description: t('payment.toast.successDesc', {
+            seatNumber: rideData.seat?.seatNumber,
+          }),
           duration: 4000,
         })
 
@@ -78,10 +85,10 @@ export function PaymentModal({
         }, 500)
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : 'Payment failed'
+          err instanceof Error ? err.message : t('payment.toast.error')
         setError(errorMessage)
 
-        toast.error('Payment failed', {
+        toast.error(t('payment.toast.error'), {
           description: errorMessage,
           duration: 5000,
         })
@@ -95,10 +102,8 @@ export function PaymentModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className='max-w-md'>
         <DialogHeader>
-          <DialogTitle className='text-2xl'>Confirm Booking</DialogTitle>
-          <DialogDescription>
-            Review your ride details and complete payment
-          </DialogDescription>
+          <DialogTitle className='text-2xl'>{t('payment.title')}</DialogTitle>
+          <DialogDescription>{t('payment.subtitle')}</DialogDescription>
         </DialogHeader>
 
         {/* Ride Details */}
@@ -107,7 +112,9 @@ export function PaymentModal({
           <div className='bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4'>
             <div className='flex items-center gap-2 mb-2'>
               <MapPin className='w-5 h-5 text-green-600' />
-              <span className='text-sm font-medium text-gray-600'>Route</span>
+              <span className='text-sm font-medium text-gray-600'>
+                {t('payment.route')}
+              </span>
             </div>
             <div className='flex items-center justify-between'>
               <div className='text-lg font-bold text-gray-800'>
@@ -135,7 +142,7 @@ export function PaymentModal({
             <div className='bg-purple-50 rounded-xl p-4'>
               <div className='flex items-center justify-between'>
                 <span className='text-sm font-medium text-gray-600'>
-                  Seat Number
+                  {t('payment.seatNumber')}
                 </span>
                 <span className='text-2xl font-bold text-purple-600'>
                   #{rideData.seat.seatNumber}
@@ -147,13 +154,17 @@ export function PaymentModal({
           {/* Price */}
           <div className='bg-gray-50 rounded-xl p-4'>
             <div className='flex items-center justify-between mb-2'>
-              <span className='text-sm font-medium text-gray-600'>Price</span>
+              <span className='text-sm font-medium text-gray-600'>
+                {t('payment.price')}
+              </span>
               <span className='text-2xl font-bold text-gray-800'>
                 E£{rideData.route.pricePerSeat.toFixed(2)}
               </span>
             </div>
             <div className='flex items-center justify-between text-sm'>
-              <span className='text-gray-500'>Your Wallet Balance</span>
+              <span className='text-gray-500'>
+                {t('payment.walletBalance')}
+              </span>
               <span
                 className={`font-semibold ${
                   hasEnoughBalance ? 'text-green-600' : 'text-red-600'
@@ -166,7 +177,7 @@ export function PaymentModal({
 
           {/* Departure Time */}
           <div className='text-sm text-gray-600 text-center'>
-            Departure:{' '}
+            {t('payment.departure')}{' '}
             {new Date(rideData.activeRide.departureTime).toLocaleString()}
           </div>
         </div>
@@ -182,7 +193,7 @@ export function PaymentModal({
         {!hasEnoughBalance && (
           <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-3'>
             <p className='text-sm text-yellow-800'>
-              Insufficient wallet balance. Please charge your wallet first.
+              {t('payment.insufficientBalance')}
             </p>
           </div>
         )}
@@ -198,22 +209,24 @@ export function PaymentModal({
               {isPending ? (
                 <>
                   <Loader2 className='w-5 h-5 mr-2 animate-spin' />
-                  Processing...
+                  {t('payment.buttons.processing')}
                 </>
               ) : (
                 <>
                   <Wallet className='w-5 h-5 mr-2' />
-                  Pay E£{rideData.route.pricePerSeat.toFixed(2)} & Book
+                  {t('payment.buttons.pay', {
+                    price: rideData.route.pricePerSeat.toFixed(2),
+                  })}
                 </>
               )}
             </Button>
           ) : (
             <Button
-              onClick={() => router.push('/p/wallet')}
+              onClick={() => router.push(`/${lng}/p/wallet`)}
               className='w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
             >
               <CreditCard className='w-5 h-5 mr-2' />
-              Charge Wallet
+              {t('payment.buttons.chargeWallet')}
             </Button>
           )}
           <Button
@@ -222,7 +235,7 @@ export function PaymentModal({
             disabled={isPending}
             className='w-full'
           >
-            Cancel
+            {t('payment.buttons.cancel')}
           </Button>
         </div>
       </DialogContent>

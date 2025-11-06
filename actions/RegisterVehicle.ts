@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { generateSeatCode } from '@/lib/generateSeatCode'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 export async function registerVehicle(formData: FormData) {
   const session = await auth()
@@ -25,14 +27,17 @@ export async function registerVehicle(formData: FormData) {
   const model = formData.get('model') as string
   const capacity = formData.get('capacity') as string
 
+  const lng = await getLocaleFromCookies()
+  const { t } = await getTranslation(lng, 'actions')
+
   // Validate required fields
   if (!vehicleNumber || !vehicleType || !capacity) {
-    throw new Error('Vehicle number, type, and seating capacity are required')
+    throw new Error(t('errors.vehicleNumberRequired'))
   }
 
   const capacityNum = parseInt(capacity)
   if (isNaN(capacityNum) || capacityNum < 1 || capacityNum > 50) {
-    throw new Error('Seating capacity must be between 1 and 50')
+    throw new Error(t('errors.capacityInvalid'))
   }
 
   try {
@@ -125,10 +130,12 @@ export async function registerVehicle(formData: FormData) {
     }
   } catch (error) {
     console.error('Vehicle registration error:', error)
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     throw new Error(
       isUpdateMode
-        ? 'Failed to update vehicle information'
-        : 'Failed to register vehicle and seats'
+        ? t('errors.failedToUpdateVehicle')
+        : t('errors.failedToRegisterVehicle')
     )
   }
 

@@ -1,0 +1,38 @@
+{
+  "title": "Wallet",
+  "currentBalance": "Current Balance",
+  "availableBalance": "Available Balance",
+  "chargeWallet": "Charge Wallet",
+  "withdrawMoney": "Withdraw Money",
+  "transferMoney": "Transfer Money",
+  "transactionHistory": "Transaction History",
+  "noTransactions": "No transactions found",
+  "amount": "Amount",
+  "enterAmount": "Enter Amount",
+  "recipient": "Recipient",
+  "recipientEmail": "Recipient Email",
+  "description": "Description",
+  "transactionDate": "Transaction Date",
+  "transactionType": "Transaction Type",
+  "transactionId": "Transaction ID",
+  "transactionStatus": "Transaction Status",
+  "types": {
+    "CHARGE": "Charge",
+    "WITHDRAW": "Withdrawal",
+    "TRANSFER": "Transfer",
+    "PAYMENT": "Payment",
+    "REFUND": "Refund"
+  },
+  "status": {
+    "PENDING": "Pending",
+    "COMPLETED": "Completed",
+    "FAILED": "Failed",
+    "CANCELLED": "Cancelled"
+  },
+  "chargeSuccess": "Wallet charged successfully",
+  "withdrawSuccess": "Withdrawal successful",
+  "transferSuccess": "Transfer successful",
+  "insufficientBalance": "Insufficient balance",
+  "invalidAmount": "Invalid amount"
+}
+

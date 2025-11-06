@@ -3,18 +3,21 @@
 import React from 'react'
 import Link from 'next/link'
 import { User, Wallet, Car, Route as RouteIcon } from 'lucide-react'
+import { useTranslation } from '@/i18n/client'
+import type { Locale } from '@/i18n/settings'
 
 interface DriverNavigationProps {
   hasVehicle: boolean
   hasRoute: boolean
+  lng: Locale
 }
 
-const getNavigationItems = (hasVehicle: boolean, hasRoute: boolean) => [
+const getNavigationItems = (hasVehicle: boolean, hasRoute: boolean, t: any, lng: Locale) => [
   {
     icon: User,
-    label: 'Profile',
-    description: 'Personal info',
-    href: '/d/dashboard/profile',
+    label: t('driverDashboard.navigation.profile.label'),
+    description: t('driverDashboard.navigation.profile.description'),
+    href: `/${lng}/d/dashboard/profile`,
     color: 'blue',
     borderLight: 'border-blue-100',
     borderHover: 'hover:border-blue-300',
@@ -25,9 +28,9 @@ const getNavigationItems = (hasVehicle: boolean, hasRoute: boolean) => [
   },
   {
     icon: Car,
-    label: hasVehicle ? 'Vehicle' : 'Register Vehicle',
-    description: hasVehicle ? 'Update info' : 'Add vehicle',
-    href: '/d/dashboard/vehicles/registration',
+    label: hasVehicle ? t('driverDashboard.navigation.vehicle.labelUpdate') : t('driverDashboard.navigation.vehicle.labelRegister'),
+    description: hasVehicle ? t('driverDashboard.navigation.vehicle.descriptionUpdate') : t('driverDashboard.navigation.vehicle.descriptionRegister'),
+    href: `/${lng}/d/dashboard/vehicles/registration`,
     color: 'purple',
     borderLight: 'border-purple-100',
     borderHover: 'hover:border-purple-300',
@@ -38,9 +41,9 @@ const getNavigationItems = (hasVehicle: boolean, hasRoute: boolean) => [
   },
   {
     icon: RouteIcon,
-    label: hasRoute ? 'Route' : 'Register Route',
-    description: hasRoute ? 'Update route' : 'Add route',
-    href: '/d/dashboard/routes/registration',
+    label: hasRoute ? t('driverDashboard.navigation.route.labelUpdate') : t('driverDashboard.navigation.route.labelRegister'),
+    description: hasRoute ? t('driverDashboard.navigation.route.descriptionUpdate') : t('driverDashboard.navigation.route.descriptionRegister'),
+    href: `/${lng}/d/dashboard/routes/registration`,
     color: 'orange',
     borderLight: 'border-orange-100',
     borderHover: 'hover:border-orange-300',
@@ -52,9 +55,9 @@ const getNavigationItems = (hasVehicle: boolean, hasRoute: boolean) => [
   },
   {
     icon: Wallet,
-    label: 'Wallet',
-    description: 'View earnings',
-    href: '/d/dashboard/wallet',
+    label: t('driverDashboard.navigation.wallet.label'),
+    description: t('driverDashboard.navigation.wallet.description'),
+    href: `/${lng}/d/dashboard/wallet`,
     color: 'green',
     borderLight: 'border-green-100',
     borderHover: 'hover:border-green-300',
@@ -68,15 +71,17 @@ const getNavigationItems = (hasVehicle: boolean, hasRoute: boolean) => [
 export function DriverNavigation({
   hasVehicle,
   hasRoute,
+  lng,
 }: DriverNavigationProps) {
-  const items = getNavigationItems(hasVehicle, hasRoute).filter(
+  const { t } = useTranslation(lng, 'dashboard')
+  const items = getNavigationItems(hasVehicle, hasRoute, t, lng).filter(
     (item) => item.show
   )
 
   return (
     <div className='max-w-md mx-auto mb-4'>
       <h2 className='text-sm font-semibold text-gray-700 mb-2 px-1'>
-        Quick Access
+        {t('driverDashboard.quickAccess')}
       </h2>
       <div className='flex gap-2 overflow-x-auto pb-2 scrollbar-hide'>
         {items.map((item) => {
@@ -104,7 +109,7 @@ export function DriverNavigation({
                 {/* Lock indicator for disabled items */}
                 {item.disabled && (
                   <p className='text-[10px] text-gray-400 mt-1'>
-                    🔒 Need vehicle
+                    {t('driverDashboard.navigation.needVehicle')}
                   </p>
                 )}
               </div>

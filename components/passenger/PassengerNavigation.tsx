@@ -2,44 +2,52 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { User, Wallet, History, Settings } from 'lucide-react'
+import { User, Wallet } from 'lucide-react'
+import { useTranslation } from '@/i18n/client'
+import type { Locale } from '@/i18n/settings'
 
-const navigationItems = [
-  {
-    icon: User,
-    label: 'Profile',
-    description: 'Manage your info',
-    href: '/p/dashboard/profile',
-    color: 'blue',
-    gradient: 'from-blue-500 to-blue-600',
-    bgLight: 'bg-blue-50',
-    borderLight: 'border-blue-100',
-    borderHover: 'hover:border-blue-300',
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
-    arrowColor: 'text-blue-500',
-  },
-  {
-    icon: Wallet,
-    label: 'Wallet',
-    description: 'Manage funds',
-    href: '/p/dashboard/wallet',
-    color: 'green',
-    gradient: 'from-green-500 to-green-600',
-    bgLight: 'bg-green-50',
-    borderLight: 'border-green-100',
-    borderHover: 'hover:border-green-300',
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
-    arrowColor: 'text-green-500',
-  },
-]
+interface PassengerNavigationProps {
+  lng: Locale
+}
 
-export function PassengerNavigation() {
+export function PassengerNavigation({ lng }: PassengerNavigationProps) {
+  const { t } = useTranslation(lng, 'dashboard')
+
+  const navigationItems = [
+    {
+      icon: User,
+      labelKey: 'navigation.profile.label',
+      descriptionKey: 'navigation.profile.description',
+      href: `/${lng}/p/dashboard/profile`,
+      color: 'blue',
+      gradient: 'from-blue-500 to-blue-600',
+      bgLight: 'bg-blue-50',
+      borderLight: 'border-blue-100',
+      borderHover: 'hover:border-blue-300',
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+      arrowColor: 'text-blue-500',
+    },
+    {
+      icon: Wallet,
+      labelKey: 'navigation.wallet.label',
+      descriptionKey: 'navigation.wallet.description',
+      href: `/${lng}/p/dashboard/wallet`,
+      color: 'green',
+      gradient: 'from-green-500 to-green-600',
+      bgLight: 'bg-green-50',
+      borderLight: 'border-green-100',
+      borderHover: 'hover:border-green-300',
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-600',
+      arrowColor: 'text-green-500',
+    },
+  ]
+
   return (
     <div className='max-w-md mx-auto mb-4'>
       <h2 className='text-sm font-semibold text-gray-700 mb-2 px-1'>
-        Quick Access
+        {t('passenger.quickAccess')}
       </h2>
       <div className='flex gap-2 overflow-x-auto pb-2 scrollbar-hide'>
         {navigationItems.map((item) => {
@@ -54,12 +62,14 @@ export function PassengerNavigation() {
                   <div className={`${item.iconBg} rounded-lg p-2 mb-2`}>
                     <Icon className={`w-5 h-5 ${item.iconColor}`} />
                   </div>
-                  
+
                   {/* Label */}
                   <h3 className='text-sm font-bold text-gray-800'>
-                    {item.label}
+                    {t(item.labelKey)}
                   </h3>
-                  <p className='text-xs text-gray-500 mt-0.5'>{item.description}</p>
+                  <p className='text-xs text-gray-500 mt-0.5'>
+                    {t(item.descriptionKey)}
+                  </p>
                 </div>
               </div>
             </Link>
@@ -69,4 +79,3 @@ export function PassengerNavigation() {
     </div>
   )
 }
-

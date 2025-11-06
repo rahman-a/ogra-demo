@@ -28,6 +28,9 @@ import { headers } from 'next/headers'
 import { cn } from '@/lib/utils'
 import { ROLES_ROUTES } from '@/lib/constants'
 import { LogoutButton } from './logout-button'
+import { SimpleLanguageSwitcher } from './simple-language-switcher'
+import type { Locale } from '@/i18n/settings'
+import { getTranslation } from '@/i18n'
 
 const excludedRoutes = ['/auth/signin', '/auth/signup']
 
@@ -60,16 +63,21 @@ interface Navbar1Props {
 }
 
 export default async function Navbar({
+  lng,
   menu = [],
-  auth = {
-    login: { title: 'Login', url: '/auth/signin' },
-    signup: { title: 'Sign up', url: '/auth/signup' },
-  },
-}: Navbar1Props) {
+  auth,
+}: Navbar1Props & { lng: Locale }) {
+  const { t } = await getTranslation(lng, 'common')
   const headerList = await headers()
   const pathname = headerList.get('x-current-path')
   const session = await getSession()
   const isExcluded = excludedRoutes.includes(pathname!)
+
+  // Set auth defaults with translations
+  const authConfig = auth || {
+    login: { title: t('login'), url: `/${lng}/auth/signin` },
+    signup: { title: t('signup'), url: `/${lng}/auth/signup` },
+  }
 
   // Build dynamic menu based on user role
   const dynamicMenu = [...menu]
@@ -79,12 +87,12 @@ export default async function Navbar({
     if (session.user.role === 'DRIVER') {
       dynamicMenu.push(
         {
-          title: 'Vehicle',
-          url: '/d/dashboard/vehicles/registration',
+          title: t('vehicle'),
+          url: `/${lng}/d/dashboard/vehicles/registration`,
         },
         {
-          title: 'Route',
-          url: '/d/dashboard/routes/registration',
+          title: t('route'),
+          url: `/${lng}/d/dashboard/routes/registration`,
         }
       )
     }
@@ -92,11 +100,11 @@ export default async function Navbar({
     // Add profile for all authenticated users
     const profileUrl =
       session.user.role === 'DRIVER'
-        ? '/d/dashboard/profile'
-        : '/p/dashboard/profile'
+        ? `/${lng}/d/dashboard/profile`
+        : `/${lng}/p/dashboard/profile`
 
     dynamicMenu.push({
-      title: 'Profile',
+      title: t('profile'),
       url: profileUrl,
     })
   }
@@ -121,7 +129,8 @@ export default async function Navbar({
               </NavigationMenu>
             </div> */}
           </div>
-          <div className='flex gap-2'>
+          <div className='flex gap-2 items-center'>
+            <SimpleLanguageSwitcher lng={lng} />
             {session?.user ? (
               <>
                 <Button asChild variant='outline' size='sm'>
@@ -132,18 +141,18 @@ export default async function Navbar({
                       ]
                     }
                   >
-                    Dashboard
+                    {t('dashboard')}
                   </a>
                 </Button>
-                <LogoutButton />
+                <LogoutButton lng={lng} />
               </>
             ) : (
               <>
                 <Button asChild variant='outline' size='sm'>
-                  <a href={auth.login.url}>{auth.login.title}</a>
+                  <a href={authConfig.login.url}>{authConfig.login.title}</a>
                 </Button>
                 <Button asChild size='sm'>
-                  <a href={auth.signup.url}>{auth.signup.title}</a>
+                  <a href={authConfig.signup.url}>{authConfig.signup.title}</a>
                 </Button>
               </>
             )}
@@ -177,6 +186,7 @@ export default async function Navbar({
                   </Accordion> */}
 
                   <div className='flex flex-col gap-3'>
+                    <SimpleLanguageSwitcher lng={lng} />
                     {session?.user ? (
                       <>
                         <Button asChild variant='outline' size='sm'>
@@ -187,18 +197,22 @@ export default async function Navbar({
                               ]
                             }
                           >
-                            Dashboard
+                            {t('dashboard')}
                           </a>
                         </Button>
-                        <LogoutButton />
+                        <LogoutButton lng={lng} />
                       </>
                     ) : (
                       <>
                         <Button asChild variant='outline' size='sm'>
-                          <a href={auth.login.url}>{auth.login.title}</a>
+                          <a href={authConfig.login.url}>
+                            {authConfig.login.title}
+                          </a>
                         </Button>
                         <Button asChild size='sm'>
-                          <a href={auth.signup.url}>{auth.signup.title}</a>
+                          <a href={authConfig.signup.url}>
+                            {authConfig.signup.title}
+                          </a>
                         </Button>
                       </>
                     )}

@@ -4,18 +4,22 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 export async function completeRide(formData: FormData) {
+  const lng = await getLocaleFromCookies()
+  const { t } = await getTranslation(lng, 'actions')
   const session = await auth()
 
   if (!session || !session.user) {
-    throw new Error('You must be logged in')
+    throw new Error(t('errors.mustBeLoggedIn'))
   }
 
   const rideId = formData.get('rideId') as string
 
   if (!rideId) {
-    throw new Error('Ride ID is required')
+    throw new Error(t('errors.rideIdRequired'))
   }
 
   try {
@@ -38,17 +42,17 @@ export async function completeRide(formData: FormData) {
       })
 
       if (!ride) {
-        throw new Error('Ride not found')
+        throw new Error(t('errors.rideNotFound'))
       }
 
       // Verify the user owns this ride
       if (ride.route.vehicle.userId !== session.user.id) {
-        throw new Error('You can only complete your own rides')
+        throw new Error(t('errors.canOnlyCompleteOwnRides'))
       }
 
       // Check if ride is active
       if (ride.status !== 'ACTIVE') {
-        throw new Error('Only active rides can be completed')
+        throw new Error(t('errors.onlyActiveRidesCanBeCompleted'))
       }
 
       // Calculate total earnings

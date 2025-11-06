@@ -4,6 +4,8 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 export async function startRide(formData: FormData) {
   const session = await auth()
@@ -12,10 +14,13 @@ export async function startRide(formData: FormData) {
     redirect('/auth/signin')
   }
 
+  const lng = await getLocaleFromCookies()
+  const { t } = await getTranslation(lng, 'actions')
+
   const direction = formData.get('direction') as string
 
   if (!direction || (direction !== 'FORWARD' && direction !== 'RETURN')) {
-    throw new Error('Invalid direction')
+    throw new Error(t('errors.invalidDirection'))
   }
 
   // Get user's vehicle and route
@@ -25,11 +30,11 @@ export async function startRide(formData: FormData) {
   })
 
   if (!vehicle) {
-    throw new Error('You need to register a vehicle first')
+    throw new Error(t('errors.needToRegisterVehicle'))
   }
 
   if (!vehicle.route) {
-    throw new Error('You need to register a route first')
+    throw new Error(t('errors.needToRegisterRoute'))
   }
 
   // Check if there's already an active ride
@@ -41,9 +46,7 @@ export async function startRide(formData: FormData) {
   })
 
   if (activeRide) {
-    throw new Error(
-      'You already have an active ride. Please complete it before starting a new one.'
-    )
+    throw new Error(t('errors.alreadyHaveActiveRide'))
   }
 
   try {
@@ -58,7 +61,9 @@ export async function startRide(formData: FormData) {
     })
   } catch (error) {
     console.error('Start ride error:', error)
-    throw new Error('Failed to start ride')
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
+    throw new Error(t('errors.failedToStartRide'))
   }
 
   // Revalidate and redirect to active ride page

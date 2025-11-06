@@ -3,6 +3,8 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 export interface BarcodeData {
   routeId: string
@@ -45,12 +47,14 @@ export async function scanBarcode(
   autoBook: boolean = true
 ): Promise<ScanResult> {
   try {
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     const session = await auth()
 
     if (!session || !session.user) {
       return {
         success: false,
-        message: 'You must be logged in to scan barcodes',
+        message: t('errors.mustBeLoggedInToScan'),
       }
     }
 
@@ -73,14 +77,14 @@ export async function scanBarcode(
     if (!routeId) {
       return {
         success: false,
-        message: 'Invalid barcode format. Expected format: routeId:seatId',
+        message: t('errors.invalidBarcodeFormat'),
       }
     }
 
     if (!seatId) {
       return {
         success: false,
-        message: 'Seat ID missing in barcode. Expected format: routeId:seatId',
+        message: t('errors.seatIdMissing'),
       }
     }
 
@@ -115,7 +119,7 @@ export async function scanBarcode(
     if (!route) {
       return {
         success: false,
-        message: 'Route not found or inactive',
+        message: t('errors.routeNotFound'),
       }
     }
 
@@ -125,7 +129,7 @@ export async function scanBarcode(
     if (!activeRide) {
       return {
         success: false,
-        message: 'No active ride found for this route',
+        message: t('errors.noActiveRide'),
       }
     }
 
@@ -142,7 +146,7 @@ export async function scanBarcode(
     if (existingBooking) {
       return {
         success: false,
-        message: 'You already have a booking for this ride',
+        message: t('errors.alreadyHaveBooking'),
       }
     }
 
@@ -153,7 +157,7 @@ export async function scanBarcode(
       if (!foundSeat) {
         return {
           success: false,
-          message: 'Seat not found',
+          message: t('errors.seatNotFound'),
         }
       }
 
@@ -170,23 +174,24 @@ export async function scanBarcode(
       if (seatBooking) {
         return {
           success: false,
-          message: `Seat #${foundSeat.seatNumber} is already booked`,
+          message: t('errors.seatAlreadyBooked', { number: foundSeat.seatNumber }),
         }
       }
 
       if (foundSeat.seatNumber === 1) {
         return {
           success: false,
-          message: 'Seat 1 is reserved for the driver',
+          message: t('errors.seatReservedForDriver'),
         }
       }
 
       if (foundSeat.status !== 'AVAILABLE') {
         return {
           success: false,
-          message: `Seat #${
-            foundSeat.seatNumber
-          } is ${foundSeat.status.toLowerCase()}`,
+          message: t('errors.seatStatus', {
+            number: foundSeat.seatNumber,
+            status: foundSeat.status.toLowerCase(),
+          }),
         }
       }
 
@@ -197,7 +202,7 @@ export async function scanBarcode(
     if (activeRide.availableSeats <= 0) {
       return {
         success: false,
-        message: 'No available seats on this ride',
+        message: t('errors.noAvailableSeats'),
       }
     }
 
@@ -210,7 +215,7 @@ export async function scanBarcode(
     return {
       success: true,
       autoBooked: false,
-      message: 'Route and ride validated successfully',
+      message: t('success.routeAndRideValidated'),
       data: {
         route: {
           id: route.id,
@@ -237,9 +242,11 @@ export async function scanBarcode(
     }
   } catch (error) {
     console.error('Scan barcode error:', error)
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     return {
       success: false,
-      message: 'Failed to process barcode',
+      message: t('errors.failedToProcessBarcode'),
     }
   }
 }
@@ -251,6 +258,9 @@ async function bookSeat(
   route: any,
   seat: any
 ): Promise<ScanResult> {
+  const lng = await getLocaleFromCookies()
+  const { t } = await getTranslation(lng, 'actions')
+  
   // Verify user exists first
   const userExists = await prisma.user.findUnique({
     where: { id: userId },
@@ -259,7 +269,7 @@ async function bookSeat(
   if (!userExists) {
     return {
       success: false,
-      message: 'User session invalid. Please log in again.',
+      message: t('errors.userSessionInvalid'),
     }
   }
 
@@ -280,7 +290,7 @@ async function bookSeat(
       console.error('Wallet creation error:', error)
       return {
         success: false,
-        message: 'Failed to create wallet. Please contact support.',
+        message: t('errors.failedToCreateWallet'),
       }
     }
   }
@@ -351,7 +361,7 @@ async function bookSeat(
       return {
         success: true,
         autoBooked: true,
-        message: `Seat #${seat.seatNumber} booked successfully!`,
+        message: t('success.seatBooked', { number: seat.seatNumber }),
         data: {
           route: {
             id: route.id,
@@ -382,7 +392,7 @@ async function bookSeat(
       console.error('Auto-booking error:', error)
       return {
         success: false,
-        message: 'Failed to book seat automatically',
+        message: t('errors.failedToBookSeat'),
       }
     }
   } else {
@@ -390,9 +400,10 @@ async function bookSeat(
     return {
       success: true,
       autoBooked: false,
-      message: `Insufficient balance. Required: E£${bookingPrice.toFixed(
-        2
-      )}, Available: E£${wallet.balance.toFixed(2)}`,
+      message: t('errors.insufficientBalance', {
+        required: bookingPrice.toFixed(2),
+        available: wallet.balance.toFixed(2),
+      }),
       data: {
         route: {
           id: route.id,
@@ -424,12 +435,14 @@ export async function bookBySeatCode(
   autoBook: boolean = true
 ): Promise<ScanResult> {
   try {
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     const session = await auth()
 
     if (!session || !session.user) {
       return {
         success: false,
-        message: 'You must be logged in to book seats',
+        message: t('errors.mustBeLoggedInToBook'),
       }
     }
 
@@ -437,7 +450,7 @@ export async function bookBySeatCode(
     if (!seatCode || seatCode.length !== 14) {
       return {
         success: false,
-        message: 'Invalid seat code. Must be 14 characters.',
+        message: t('errors.invalidSeatCode'),
       }
     }
 
@@ -469,7 +482,7 @@ export async function bookBySeatCode(
     if (!seat) {
       return {
         success: false,
-        message: 'Seat not found. Please check the code and try again.',
+        message: t('errors.seatNotFoundCheckCode'),
       }
     }
 
@@ -478,7 +491,7 @@ export async function bookBySeatCode(
     if (!route) {
       return {
         success: false,
-        message: 'No route found for this vehicle.',
+        message: t('errors.noRouteForVehicle'),
       }
     }
 
@@ -488,7 +501,7 @@ export async function bookBySeatCode(
     if (!activeRide) {
       return {
         success: false,
-        message: 'No active ride found for this route.',
+        message: t('errors.noActiveRideForRoute'),
       }
     }
 
@@ -505,7 +518,7 @@ export async function bookBySeatCode(
     if (existingBooking) {
       return {
         success: false,
-        message: 'You already have a booking for this ride',
+        message: t('errors.alreadyHaveBooking'),
       }
     }
 
@@ -522,21 +535,24 @@ export async function bookBySeatCode(
     if (seatBooking) {
       return {
         success: false,
-        message: `Seat #${seat.seatNumber} is already booked`,
+        message: t('errors.seatAlreadyBooked', { number: seat.seatNumber }),
       }
     }
 
     if (seat.seatNumber === 1) {
       return {
         success: false,
-        message: 'Seat 1 is reserved for the driver',
+        message: t('errors.seatReservedForDriver'),
       }
     }
 
     if (seat.status !== 'AVAILABLE') {
       return {
         success: false,
-        message: `Seat #${seat.seatNumber} is ${seat.status.toLowerCase()}`,
+        message: t('errors.seatStatus', {
+          number: seat.seatNumber,
+          status: seat.status.toLowerCase(),
+        }),
       }
     }
 
@@ -544,7 +560,7 @@ export async function bookBySeatCode(
     if (activeRide.availableSeats <= 0) {
       return {
         success: false,
-        message: 'No available seats on this ride',
+        message: t('errors.noAvailableSeats'),
       }
     }
 
@@ -557,7 +573,7 @@ export async function bookBySeatCode(
     return {
       success: true,
       autoBooked: false,
-      message: 'Seat validated successfully',
+      message: t('success.seatValidated'),
       data: {
         route: {
           id: route.id,
@@ -582,9 +598,11 @@ export async function bookBySeatCode(
     }
   } catch (error) {
     console.error('Book by seat code error:', error)
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     return {
       success: false,
-      message: 'Failed to process seat code',
+      message: t('errors.failedToProcessSeatCode'),
     }
   }
 }
@@ -596,12 +614,14 @@ export async function bookByPlateNumber(
   autoBook: boolean = true
 ): Promise<ScanResult> {
   try {
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     const session = await auth()
 
     if (!session || !session.user) {
       return {
         success: false,
-        message: 'You must be logged in to book seats',
+        message: t('errors.mustBeLoggedInToBook'),
       }
     }
 
@@ -609,7 +629,7 @@ export async function bookByPlateNumber(
     if (!plateNumber || plateNumber.trim().length === 0) {
       return {
         success: false,
-        message: 'Please enter a valid plate number.',
+        message: t('errors.invalidPlateNumber'),
       }
     }
 
@@ -617,7 +637,7 @@ export async function bookByPlateNumber(
     if (!seatNumber || seatNumber < 1) {
       return {
         success: false,
-        message: 'Please enter a valid seat number.',
+        message: t('errors.invalidSeatNumber'),
       }
     }
 
@@ -656,7 +676,7 @@ export async function bookByPlateNumber(
     if (!vehicle) {
       return {
         success: false,
-        message: 'Vehicle not found. Please check the plate number.',
+        message: t('errors.vehicleNotFound'),
       }
     }
 
@@ -665,7 +685,7 @@ export async function bookByPlateNumber(
     if (!route) {
       return {
         success: false,
-        message: 'No route found for this vehicle.',
+        message: t('errors.noRouteForVehicle'),
       }
     }
 
@@ -675,7 +695,7 @@ export async function bookByPlateNumber(
     if (!activeRide) {
       return {
         success: false,
-        message: 'No active ride found for this route.',
+        message: t('errors.noActiveRideForRoute'),
       }
     }
 
@@ -692,7 +712,7 @@ export async function bookByPlateNumber(
     if (existingBooking) {
       return {
         success: false,
-        message: 'You already have a booking for this ride',
+        message: t('errors.alreadyHaveBooking'),
       }
     }
 
@@ -702,7 +722,7 @@ export async function bookByPlateNumber(
     if (!selectedSeat) {
       return {
         success: false,
-        message: `Seat #${seatNumber} not found on this vehicle`,
+        message: t('errors.seatNotFoundOnVehicle', { number: seatNumber }),
       }
     }
 
@@ -710,16 +730,17 @@ export async function bookByPlateNumber(
     if (selectedSeat.seatNumber === 1) {
       return {
         success: false,
-        message: 'Seat 1 is reserved for the driver',
+        message: t('errors.seatReservedForDriver'),
       }
     }
 
     if (selectedSeat.status !== 'AVAILABLE') {
       return {
         success: false,
-        message: `Seat #${
-          selectedSeat.seatNumber
-        } is ${selectedSeat.status.toLowerCase()}`,
+        message: t('errors.seatStatus', {
+          number: selectedSeat.seatNumber,
+          status: selectedSeat.status.toLowerCase(),
+        }),
       }
     }
 
@@ -736,7 +757,7 @@ export async function bookByPlateNumber(
     if (seatBooking) {
       return {
         success: false,
-        message: `Seat #${selectedSeat.seatNumber} is already booked`,
+        message: t('errors.seatAlreadyBooked', { number: selectedSeat.seatNumber }),
       }
     }
 
@@ -749,7 +770,7 @@ export async function bookByPlateNumber(
     return {
       success: true,
       autoBooked: false,
-      message: 'Seat validated successfully',
+      message: t('success.seatValidated'),
       data: {
         route: {
           id: route.id,
@@ -774,9 +795,11 @@ export async function bookByPlateNumber(
     }
   } catch (error) {
     console.error('Book by plate number error:', error)
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     return {
       success: false,
-      message: 'Failed to process plate number',
+      message: t('errors.failedToProcessPlateNumber'),
     }
   }
 }

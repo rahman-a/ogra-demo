@@ -4,6 +4,8 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 export async function registerRoute(formData: FormData) {
   const session = await auth()
@@ -18,8 +20,11 @@ export async function registerRoute(formData: FormData) {
     include: { route: true },
   })
 
+  const lng = await getLocaleFromCookies()
+  const { t } = await getTranslation(lng, 'actions')
+
   if (!vehicle) {
-    throw new Error('You need to register a vehicle first')
+    throw new Error(t('errors.needToRegisterVehicle'))
   }
 
   const existingRoute = vehicle.route
@@ -34,19 +39,19 @@ export async function registerRoute(formData: FormData) {
 
   // Validate required fields
   if (!origin || !destination || !pricePerSeat) {
-    throw new Error('Origin, destination, and price per seat are required')
+    throw new Error(t('errors.originDestinationPriceRequired'))
   }
 
   const price = parseFloat(pricePerSeat)
   if (isNaN(price) || price < 0) {
-    throw new Error('Price must be a valid positive number')
+    throw new Error(t('errors.priceMustBePositive'))
   }
 
   let distanceNum = null
   if (distance) {
     distanceNum = parseFloat(distance)
     if (isNaN(distanceNum) || distanceNum < 0) {
-      throw new Error('Distance must be a valid positive number')
+      throw new Error(t('errors.distanceMustBePositive'))
     }
   }
 
@@ -54,7 +59,7 @@ export async function registerRoute(formData: FormData) {
   if (duration) {
     durationNum = parseInt(duration)
     if (isNaN(durationNum) || durationNum < 0) {
-      throw new Error('Duration must be a valid positive number')
+      throw new Error(t('errors.durationMustBePositive'))
     }
   }
 
@@ -88,8 +93,10 @@ export async function registerRoute(formData: FormData) {
     }
   } catch (error) {
     console.error('Route registration/update error:', error)
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     throw new Error(
-      isUpdateMode ? 'Failed to update route' : 'Failed to register route'
+      isUpdateMode ? t('errors.failedToUpdateRoute') : t('errors.failedToRegisterRoute')
     )
   }
 

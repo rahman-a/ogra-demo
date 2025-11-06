@@ -11,18 +11,23 @@ import {
 } from '@/actions/ScanBarcode'
 import { Html5Qrcode } from 'html5-qrcode'
 import { toast } from 'sonner'
+import { useTranslation } from '@/i18n/client'
+import type { Locale } from '@/i18n/settings'
 
 type InputMethod = 'camera' | 'seatCode' | 'plateNumber'
 
 interface BarcodeScannerProps {
   onScanSuccess: (result: ScanResult) => void
   onScanError: (error: string) => void
+  lng: Locale
 }
 
 export function BarcodeScanner({
   onScanSuccess,
   onScanError,
+  lng,
 }: BarcodeScannerProps) {
+  const { t } = useTranslation(lng, 'dashboard')
   const [isScanning, setIsScanning] = useState(false)
   const [inputMethod, setInputMethod] = useState<InputMethod>('camera')
   const [seatCodeInput, setSeatCodeInput] = useState('')
@@ -59,8 +64,8 @@ export function BarcodeScanner({
         },
         (decodedText) => {
           // Success callback
-          toast.success('Barcode detected!', {
-            description: 'Validating and processing...',
+          toast.success(t('scanner.toast.barcodeDetected'), {
+            description: t('scanner.toast.validating'),
             duration: 2000,
           })
           handleScan(decodedText)
@@ -73,16 +78,15 @@ export function BarcodeScanner({
         }
       )
       setCameraLoading(false)
-      toast.success('Camera ready', {
-        description: 'Point your camera at the barcode',
+      toast.success(t('scanner.toast.cameraReady'), {
+        description: t('scanner.toast.cameraReadyDesc'),
         duration: 3000,
       })
     } catch (err) {
       console.error('Camera start error:', err)
       setCameraLoading(false)
-      toast.error('Camera access denied', {
-        description:
-          'Failed to start camera. Please use manual entry or check permissions.',
+      toast.error(t('scanner.toast.cameraError'), {
+        description: t('scanner.toast.cameraErrorDesc'),
         duration: 5000,
       })
       onScanError('Failed to start camera. Please use manual entry.')
@@ -107,7 +111,7 @@ export function BarcodeScanner({
     if (!barcodeData || loading) return
 
     // Show loading toast
-    const loadingToast = toast.loading('Processing barcode...')
+    const loadingToast = toast.loading(t('scanner.toast.processing'))
 
     setLoading(true)
     try {
@@ -120,13 +124,13 @@ export function BarcodeScanner({
       if (result.success) {
         if (result.autoBooked) {
           // Show success toast for auto-booking
-          toast.success('Seat booked successfully!', {
+          toast.success(t('scanner.toast.seatBooked'), {
             description: result.message,
             duration: 5000,
           })
         } else {
           // Show info toast for validation success
-          toast.info('Route validated', {
+          toast.info(t('scanner.toast.routeValidated'), {
             description: result.message,
             duration: 3000,
           })
@@ -139,7 +143,7 @@ export function BarcodeScanner({
         setSeatNumberInput('')
       } else {
         // Show error toast
-        toast.error('Scan failed', {
+        toast.error(t('scanner.toast.scanFailed'), {
           description: result.message,
           duration: 5000,
         })
@@ -150,8 +154,8 @@ export function BarcodeScanner({
       toast.dismiss(loadingToast)
 
       // Show error toast
-      toast.error('Processing failed', {
-        description: 'Failed to process barcode. Please try again.',
+      toast.error(t('scanner.toast.processingFailed'), {
+        description: t('scanner.toast.processingFailedDesc'),
         duration: 5000,
       })
       onScanError('Failed to process barcode')
@@ -165,7 +169,7 @@ export function BarcodeScanner({
     if (!seatCodeInput.trim() || loading) return
 
     // Show loading toast
-    const loadingToast = toast.loading('Processing seat code...')
+    const loadingToast = toast.loading(t('scanner.toast.processingSeatCode'))
 
     setLoading(true)
     try {
@@ -177,12 +181,12 @@ export function BarcodeScanner({
 
       if (result.success) {
         if (result.autoBooked) {
-          toast.success('Seat booked successfully!', {
+          toast.success(t('scanner.toast.seatBooked'), {
             description: result.message,
             duration: 5000,
           })
         } else {
-          toast.info('Route validated', {
+          toast.info(t('scanner.toast.routeValidated'), {
             description: result.message,
             duration: 3000,
           })
@@ -192,7 +196,7 @@ export function BarcodeScanner({
         setSeatCodeInput('')
         setSeatNumberInput('')
       } else {
-        toast.error('Failed', {
+        toast.error(t('scanner.toast.scanFailed'), {
           description: result.message,
           duration: 5000,
         })
@@ -200,8 +204,8 @@ export function BarcodeScanner({
       }
     } catch {
       toast.dismiss(loadingToast)
-      toast.error('Processing failed', {
-        description: 'Failed to process seat code. Please try again.',
+      toast.error(t('scanner.toast.processingFailed'), {
+        description: t('scanner.toast.processingFailedDesc'),
         duration: 5000,
       })
       onScanError('Failed to process seat code')
@@ -215,7 +219,7 @@ export function BarcodeScanner({
     if (!plateNumberInput.trim() || !seatNumberInput.trim() || loading) return
 
     // Show loading toast
-    const loadingToast = toast.loading('Processing plate number...')
+    const loadingToast = toast.loading(t('scanner.toast.processingPlate'))
 
     setLoading(true)
     try {
@@ -224,8 +228,8 @@ export function BarcodeScanner({
 
       if (isNaN(seatNum) || seatNum < 1) {
         toast.dismiss(loadingToast)
-        toast.error('Invalid seat number', {
-          description: 'Please enter a valid seat number (1 or greater).',
+        toast.error(t('scanner.toast.invalidSeatNumber'), {
+          description: t('scanner.toast.invalidSeatNumberDesc'),
           duration: 5000,
         })
         setLoading(false)
@@ -240,12 +244,12 @@ export function BarcodeScanner({
 
       if (result.success) {
         if (result.autoBooked) {
-          toast.success('Seat booked successfully!', {
+          toast.success(t('scanner.toast.seatBooked'), {
             description: result.message,
             duration: 5000,
           })
         } else {
-          toast.info('Route validated', {
+          toast.info(t('scanner.toast.routeValidated'), {
             description: result.message,
             duration: 3000,
           })
@@ -255,7 +259,7 @@ export function BarcodeScanner({
         setPlateNumberInput('')
         setSeatNumberInput('')
       } else {
-        toast.error('Failed', {
+        toast.error(t('scanner.toast.scanFailed'), {
           description: result.message,
           duration: 5000,
         })
@@ -263,8 +267,8 @@ export function BarcodeScanner({
       }
     } catch {
       toast.dismiss(loadingToast)
-      toast.error('Processing failed', {
-        description: 'Failed to process plate number. Please try again.',
+      toast.error(t('scanner.toast.processingFailed'), {
+        description: t('scanner.toast.processingFailedDesc'),
         duration: 5000,
       })
       onScanError('Failed to process plate number')
@@ -289,7 +293,7 @@ export function BarcodeScanner({
         className='w-full h-32 rounded-2xl bg-linear-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-xl text-white flex flex-col items-center justify-center gap-3'
       >
         <QrCode className='w-16 h-16' />
-        <span className='text-lg font-bold'>Scan Barcode to Book</span>
+        <span className='text-lg font-bold'>{t('passenger.scanButton')}</span>
       </Button>
     )
   }
@@ -298,7 +302,9 @@ export function BarcodeScanner({
     <div className='fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4'>
       <div className='bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto'>
         <div className='flex items-center justify-between mb-6'>
-          <h2 className='text-xl font-bold text-gray-800'>Book Your Seat</h2>
+          <h2 className='text-xl font-bold text-gray-800'>
+            {t('scanner.title')}
+          </h2>
           <Button
             variant='ghost'
             size='icon'
@@ -322,7 +328,7 @@ export function BarcodeScanner({
             className='flex flex-col items-center gap-1 h-auto py-3'
           >
             <Camera className='w-5 h-5' />
-            <span className='text-xs'>Camera</span>
+            <span className='text-xs'>{t('scanner.methods.camera')}</span>
           </Button>
           <Button
             type='button'
@@ -336,7 +342,7 @@ export function BarcodeScanner({
             className='flex flex-col items-center gap-1 h-auto py-3'
           >
             <Keyboard className='w-5 h-5' />
-            <span className='text-xs'>Seat Code</span>
+            <span className='text-xs'>{t('scanner.methods.seatCode')}</span>
           </Button>
           <Button
             type='button'
@@ -350,7 +356,7 @@ export function BarcodeScanner({
             className='flex flex-col items-center gap-1 h-auto py-3'
           >
             <Car className='w-5 h-5' />
-            <span className='text-xs'>Plate No.</span>
+            <span className='text-xs'>{t('scanner.methods.plateNumber')}</span>
           </Button>
         </div>
 
@@ -361,7 +367,7 @@ export function BarcodeScanner({
               <div className='text-center py-8'>
                 <Camera className='w-16 h-16 text-gray-400 mx-auto mb-4' />
                 <p className='text-sm text-gray-600 mb-4'>
-                  Use your camera to scan the QR code on your seat
+                  {t('scanner.camera.instruction')}
                 </p>
                 <Button
                   type='button'
@@ -371,7 +377,7 @@ export function BarcodeScanner({
                   disabled={loading}
                 >
                   <Camera className='w-5 h-5 mr-2' />
-                  Start Camera
+                  {t('scanner.camera.startButton')}
                 </Button>
               </div>
             ) : (
@@ -382,7 +388,7 @@ export function BarcodeScanner({
                       <div className='text-center'>
                         <Loader2 className='w-12 h-12 text-blue-500 animate-spin mx-auto mb-2' />
                         <p className='text-sm text-gray-600'>
-                          Starting camera...
+                          {t('scanner.camera.starting')}
                         </p>
                       </div>
                     </div>
@@ -404,11 +410,11 @@ export function BarcodeScanner({
                   }}
                   disabled={loading}
                 >
-                  Close Camera
+                  {t('scanner.camera.closeButton')}
                 </Button>
 
                 <p className='text-xs text-gray-500 text-center mt-3'>
-                  Position the QR code within the frame
+                  {t('scanner.camera.positionTip')}
                 </p>
               </div>
             )}
@@ -421,25 +427,27 @@ export function BarcodeScanner({
             <div className='text-center py-4 mb-4'>
               <Keyboard className='w-16 h-16 text-gray-400 mx-auto mb-4' />
               <p className='text-sm text-gray-600'>
-                Enter the 14-digit code printed on your seat
+                {t('scanner.seatCode.instruction')}
               </p>
             </div>
 
             <form onSubmit={handleSeatCodeSubmit} className='space-y-3'>
               <label htmlFor='seat-code-input' className='sr-only'>
-                Enter 14-digit seat code
+                {t('scanner.seatCode.placeholder')}
               </label>
               <input
                 id='seat-code-input'
                 type='text'
                 value={seatCodeInput}
                 onChange={(e) => setSeatCodeInput(e.target.value)}
-                placeholder='Enter 14-digit seat code'
+                placeholder={t('scanner.seatCode.placeholder')}
                 maxLength={14}
                 className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-wider font-mono'
               />
               <div className='text-xs text-gray-500 text-center'>
-                {seatCodeInput.length}/14 characters
+                {t('scanner.seatCode.charactersCount', {
+                  count: seatCodeInput.length,
+                })}
               </div>
               <Button
                 type='submit'
@@ -449,10 +457,10 @@ export function BarcodeScanner({
                 {loading ? (
                   <>
                     <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                    Processing...
+                    {t('scanner.processing')}
                   </>
                 ) : (
-                  'Find & Book Seat'
+                  t('scanner.seatCode.submitButton')
                 )}
               </Button>
             </form>
@@ -465,7 +473,7 @@ export function BarcodeScanner({
             <div className='text-center py-4 mb-4'>
               <Car className='w-16 h-16 text-gray-400 mx-auto mb-4' />
               <p className='text-sm text-gray-600'>
-                Enter the vehicle&apos;s plate number and seat number to book
+                {t('scanner.plateNumber.instruction')}
               </p>
             </div>
 
@@ -475,7 +483,7 @@ export function BarcodeScanner({
                   htmlFor='plate-number-input'
                   className='block text-sm font-medium text-gray-700 mb-1'
                 >
-                  Vehicle Plate Number *
+                  {t('scanner.plateNumber.plateLabel')}
                 </label>
                 <input
                   id='plate-number-input'
@@ -484,7 +492,7 @@ export function BarcodeScanner({
                   onChange={(e) =>
                     setPlateNumberInput(e.target.value.toUpperCase())
                   }
-                  placeholder='e.g., ABC1234'
+                  placeholder={t('scanner.plateNumber.platePlaceholder')}
                   className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-wider font-mono uppercase'
                   required
                 />
@@ -495,7 +503,7 @@ export function BarcodeScanner({
                   htmlFor='seat-number-input'
                   className='block text-sm font-medium text-gray-700 mb-1'
                 >
-                  Seat Number *
+                  {t('scanner.plateNumber.seatLabel')}
                 </label>
                 <input
                   id='seat-number-input'
@@ -503,12 +511,12 @@ export function BarcodeScanner({
                   min='1'
                   value={seatNumberInput}
                   onChange={(e) => setSeatNumberInput(e.target.value)}
-                  placeholder='e.g., 5'
+                  placeholder={t('scanner.plateNumber.seatPlaceholder')}
                   className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg'
                   required
                 />
                 <p className='text-xs text-gray-500 mt-1 text-center'>
-                  Enter the seat number you want to book
+                  {t('scanner.plateNumber.seatTip')}
                 </p>
               </div>
 
@@ -522,10 +530,10 @@ export function BarcodeScanner({
                 {loading ? (
                   <>
                     <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                    Processing...
+                    {t('scanner.processing')}
                   </>
                 ) : (
-                  'Find Vehicle & Book'
+                  t('scanner.plateNumber.submitButton')
                 )}
               </Button>
             </form>
@@ -533,7 +541,7 @@ export function BarcodeScanner({
         )}
 
         <p className='text-xs text-gray-500 text-center mt-6'>
-          Choose your preferred method to book a seat
+          {t('scanner.tip')}
         </p>
       </div>
     </div>

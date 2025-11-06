@@ -3,6 +3,8 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 type TransferDestination =
   | 'WALLET'
@@ -11,10 +13,12 @@ type TransferDestination =
   | 'ORANGE_CASH'
 
 export async function transferMoney(formData: FormData) {
+  const lng = await getLocaleFromCookies()
+  const { t } = await getTranslation(lng, 'actions')
   const session = await auth()
 
   if (!session || !session.user) {
-    throw new Error('You must be logged in')
+    throw new Error(t('errors.mustBeLoggedIn'))
   }
 
   const amount = formData.get('amount') as string
@@ -22,14 +26,12 @@ export async function transferMoney(formData: FormData) {
   const recipientIdentifier = formData.get('recipientIdentifier') as string // Email for wallet, phone for e-wallet
 
   if (!amount || !destination || !recipientIdentifier) {
-    throw new Error(
-      'Amount, destination, and recipient identifier are required'
-    )
+    throw new Error(t('errors.amountDestinationRecipientRequired'))
   }
 
   const amountNum = parseFloat(amount)
   if (isNaN(amountNum) || amountNum <= 0) {
-    throw new Error('Amount must be a positive number')
+    throw new Error(t('errors.amountMustBePositive'))
   }
 
   try {
@@ -40,15 +42,15 @@ export async function transferMoney(formData: FormData) {
       })
 
       if (!senderWallet) {
-        throw new Error('Wallet not found. Please create a wallet first.')
+        throw new Error(t('errors.walletNotFound'))
       }
 
       // Check if balance is sufficient
       if (senderWallet.balance < amountNum) {
         throw new Error(
-          `Insufficient balance. Available: ${senderWallet.balance.toFixed(
-            2
-          )} EGP`
+          t('errors.insufficientBalanceAvailable', {
+            available: senderWallet.balance.toFixed(2),
+          })
         )
       }
 
@@ -63,11 +65,11 @@ export async function transferMoney(formData: FormData) {
         })
 
         if (!recipient) {
-          throw new Error('Recipient not found')
+          throw new Error(t('errors.recipientNotFound'))
         }
 
         if (recipient.id === session.user.id) {
-          throw new Error('Cannot transfer to yourself')
+          throw new Error(t('errors.cannotTransferToYourself'))
         }
 
         // Get or create recipient's wallet
@@ -153,9 +155,11 @@ export async function transferMoney(formData: FormData) {
 
     revalidatePath('/d/dashboard')
     revalidatePath('/p/dashboard')
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     return {
       success: true,
-      message: `Successfully transferred ${amountNum.toFixed(2)} EGP`,
+      message: t('success.transferSuccess', { amount: amountNum.toFixed(2) }),
     }
   } catch (error) {
     console.error('Transfer money error:', error)

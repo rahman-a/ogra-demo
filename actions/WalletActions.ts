@@ -3,6 +3,8 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 export interface WalletActionResult {
   success: boolean
@@ -15,12 +17,14 @@ export async function addFundsToWallet(
   amount: number
 ): Promise<WalletActionResult> {
   try {
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     const session = await auth()
 
     if (!session || !session.user) {
       return {
         success: false,
-        message: 'You must be logged in to add funds',
+        message: t('errors.mustBeLoggedInToAddFunds'),
       }
     }
 
@@ -28,14 +32,14 @@ export async function addFundsToWallet(
     if (!amount || amount <= 0) {
       return {
         success: false,
-        message: 'Please enter a valid amount greater than 0',
+        message: t('errors.invalidAmount'),
       }
     }
 
     if (amount > 10000) {
       return {
         success: false,
-        message: 'Maximum charge amount is E£10,000',
+        message: t('errors.maxChargeAmount'),
       }
     }
 
@@ -88,21 +92,23 @@ export async function addFundsToWallet(
 
       return {
         success: true,
-        message: `Successfully added E£${amount.toFixed(2)} to your wallet!`,
+        message: t('success.fundsAdded', { amount: amount.toFixed(2) }),
         newBalance: result.balance,
       }
     } catch (error) {
       console.error('Add funds error:', error)
       return {
         success: false,
-        message: 'Failed to add funds. Please try again.',
+        message: t('errors.failedToAddFunds'),
       }
     }
   } catch (error) {
     console.error('Add funds error:', error)
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     return {
       success: false,
-      message: 'An unexpected error occurred',
+      message: t('errors.unexpectedError'),
     }
   }
 }

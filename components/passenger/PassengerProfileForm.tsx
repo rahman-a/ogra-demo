@@ -14,6 +14,8 @@ import {
 } from 'lucide-react'
 import { updatePassengerProfile } from '@/actions/UpdatePassengerProfile'
 import { toast } from 'sonner'
+import { useTranslation } from '@/i18n/client'
+import type { Locale } from '@/i18n/settings'
 
 interface PassengerProfileFormProps {
   user: {
@@ -26,9 +28,11 @@ interface PassengerProfileFormProps {
     dateOfBirth: Date | null
     createdAt: Date
   }
+  lng: Locale
 }
 
-export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
+export function PassengerProfileForm({ user, lng }: PassengerProfileFormProps) {
+  const { t } = useTranslation(lng, 'dashboard')
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -48,7 +52,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
     e.preventDefault()
 
     setLoading(true)
-    const loadingToast = toast.loading('Updating profile...')
+    const loadingToast = toast.loading(t('profile.toast.updating'))
 
     try {
       const formDataObj = new FormData()
@@ -61,21 +65,21 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
       toast.dismiss(loadingToast)
 
       if (result.success) {
-        toast.success('Success!', {
+        toast.success(t('profile.toast.success'), {
           description: result.message,
           duration: 5000,
         })
         setIsEditing(false)
       } else {
-        toast.error('Failed', {
+        toast.error(t('profile.toast.error'), {
           description: result.message,
           duration: 5000,
         })
       }
     } catch (error) {
       toast.dismiss(loadingToast)
-      toast.error('Error', {
-        description: 'Failed to update profile',
+      toast.error(t('profile.toast.error'), {
+        description: t('profile.toast.errorDesc'),
         duration: 5000,
       })
     } finally {
@@ -112,9 +116,11 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
       {/* Header */}
       <div className='flex items-center justify-between mb-6'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-800'>My Profile</h1>
+          <h1 className='text-2xl font-bold text-gray-800'>
+            {t('profile.title')}
+          </h1>
           <p className='text-sm text-gray-600 mt-1'>
-            Manage your personal information
+            {t('profile.subtitle')}
           </p>
         </div>
         {!isEditing && (
@@ -123,7 +129,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
             className='bg-blue-600 hover:bg-blue-700'
           >
             <Edit2 className='w-4 h-4 mr-2' />
-            Edit Profile
+            {t('profile.editButton')}
           </Button>
         )}
       </div>
@@ -135,19 +141,19 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
           <div className='mb-6'>
             <h2 className='text-lg font-bold text-gray-800 mb-4 flex items-center gap-2'>
               <User className='w-5 h-5 text-blue-600' />
-              Account Information
+              {t('profile.sections.account')}
             </h2>
 
             {/* Email (Read-only) */}
             <div className='mb-4'>
               <label className='block text-sm font-medium text-gray-700 mb-2'>
-                Email Address
+                {t('profile.fields.email')}
               </label>
               <div className='bg-gray-50 px-4 py-3 rounded-lg border border-gray-200'>
                 <p className='text-gray-700'>{user.email}</p>
               </div>
               <p className='text-xs text-gray-500 mt-1'>
-                Email cannot be changed
+                {t('profile.fields.emailNote')}
               </p>
             </div>
 
@@ -157,7 +163,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
                 htmlFor='name'
                 className='block text-sm font-medium text-gray-700 mb-2'
               >
-                Full Name *
+                {t('profile.fields.name')}
               </label>
               <input
                 id='name'
@@ -172,14 +178,14 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
                     ? 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
                     : 'bg-gray-50 border-gray-200'
                 } ${!isEditing || loading ? 'cursor-not-allowed' : ''}`}
-                placeholder='Enter your full name'
+                placeholder={t('profile.fields.namePlaceholder')}
               />
             </div>
 
             {/* Member Since */}
             <div className='mb-4'>
               <label className='block text-sm font-medium text-gray-700 mb-2'>
-                Member Since
+                {t('profile.fields.memberSince')}
               </label>
               <div className='bg-gray-50 px-4 py-3 rounded-lg border border-gray-200'>
                 <p className='text-gray-700'>
@@ -197,7 +203,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
           <div className='mb-6'>
             <h2 className='text-lg font-bold text-gray-800 mb-4 flex items-center gap-2'>
               <Phone className='w-5 h-5 text-green-600' />
-              Contact Information
+              {t('profile.sections.contact')}
             </h2>
 
             {/* Phone */}
@@ -206,7 +212,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
                 htmlFor='phone'
                 className='block text-sm font-medium text-gray-700 mb-2'
               >
-                Phone Number
+                {t('profile.fields.phone')}
               </label>
               <input
                 id='phone'
@@ -220,7 +226,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
                     ? 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
                     : 'bg-gray-50 border-gray-200'
                 } ${!isEditing || loading ? 'cursor-not-allowed' : ''}`}
-                placeholder='e.g., +20 123 456 7890'
+                placeholder={t('profile.fields.phonePlaceholder')}
               />
             </div>
           </div>
@@ -229,7 +235,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
           <div className='mb-6'>
             <h2 className='text-lg font-bold text-gray-800 mb-4 flex items-center gap-2'>
               <MapPin className='w-5 h-5 text-red-600' />
-              Address
+              {t('profile.sections.address')}
             </h2>
 
             {/* Street Address */}
@@ -238,7 +244,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
                 htmlFor='address'
                 className='block text-sm font-medium text-gray-700 mb-2'
               >
-                Street Address
+                {t('profile.fields.streetAddress')}
               </label>
               <textarea
                 id='address'
@@ -252,7 +258,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
                     ? 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
                     : 'bg-gray-50 border-gray-200'
                 } ${!isEditing || loading ? 'cursor-not-allowed' : ''}`}
-                placeholder='Enter your street address'
+                placeholder={t('profile.fields.streetPlaceholder')}
               />
             </div>
 
@@ -263,7 +269,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
                   htmlFor='city'
                   className='block text-sm font-medium text-gray-700 mb-2'
                 >
-                  City
+                  {t('profile.fields.city')}
                 </label>
                 <input
                   id='city'
@@ -277,7 +283,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
                       ? 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
                       : 'bg-gray-50 border-gray-200'
                   } ${!isEditing || loading ? 'cursor-not-allowed' : ''}`}
-                  placeholder='Enter city'
+                  placeholder={t('profile.fields.cityPlaceholder')}
                 />
               </div>
 
@@ -286,7 +292,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
                   htmlFor='state'
                   className='block text-sm font-medium text-gray-700 mb-2'
                 >
-                  State/Province
+                  {t('profile.fields.state')}
                 </label>
                 <input
                   id='state'
@@ -300,7 +306,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
                       ? 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
                       : 'bg-gray-50 border-gray-200'
                   } ${!isEditing || loading ? 'cursor-not-allowed' : ''}`}
-                  placeholder='Enter state'
+                  placeholder={t('profile.fields.statePlaceholder')}
                 />
               </div>
             </div>
@@ -310,7 +316,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
           <div>
             <h2 className='text-lg font-bold text-gray-800 mb-4 flex items-center gap-2'>
               <Calendar className='w-5 h-5 text-purple-600' />
-              Personal Information
+              {t('profile.sections.personal')}
             </h2>
 
             {/* Date of Birth */}
@@ -319,7 +325,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
                 htmlFor='dateOfBirth'
                 className='block text-sm font-medium text-gray-700 mb-2'
               >
-                Date of Birth
+                {t('profile.fields.dateOfBirth')}
               </label>
               <input
                 id='dateOfBirth'
@@ -349,12 +355,12 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
               {loading ? (
                 <>
                   <Loader2 className='w-5 h-5 mr-2 animate-spin' />
-                  Saving...
+                  {t('profile.buttons.saving')}
                 </>
               ) : (
                 <>
                   <Save className='w-5 h-5 mr-2' />
-                  Save Changes
+                  {t('profile.buttons.save')}
                 </>
               )}
             </Button>
@@ -366,7 +372,7 @@ export function PassengerProfileForm({ user }: PassengerProfileFormProps) {
               className='flex-1 h-12'
             >
               <X className='w-5 h-5 mr-2' />
-              Cancel
+              {t('profile.buttons.cancel')}
             </Button>
           </div>
         )}

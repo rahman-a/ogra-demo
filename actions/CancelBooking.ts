@@ -3,18 +3,22 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 export async function cancelBooking(formData: FormData) {
+  const lng = await getLocaleFromCookies()
+  const { t } = await getTranslation(lng, 'actions')
   const session = await auth()
 
   if (!session || !session.user) {
-    throw new Error('You must be logged in')
+    throw new Error(t('errors.mustBeLoggedIn'))
   }
 
   const bookingId = formData.get('bookingId') as string
 
   if (!bookingId) {
-    throw new Error('Booking ID is required')
+    throw new Error(t('errors.bookingIdRequired'))
   }
 
   try {
@@ -29,21 +33,21 @@ export async function cancelBooking(formData: FormData) {
       })
 
       if (!booking) {
-        throw new Error('Booking not found')
+        throw new Error(t('errors.bookingNotFound'))
       }
 
       // Check if user owns this booking
       if (booking.passengerId !== session.user.id) {
-        throw new Error('You can only cancel your own bookings')
+        throw new Error(t('errors.canOnlyCancelOwnBookings'))
       }
 
       // Check if booking is already cancelled or completed
       if (booking.status === 'CANCELLED') {
-        throw new Error('Booking is already cancelled')
+        throw new Error(t('errors.bookingAlreadyCancelled'))
       }
 
       if (booking.status === 'COMPLETED') {
-        throw new Error('Cannot cancel a completed booking')
+        throw new Error(t('errors.cannotCancelCompletedBooking'))
       }
 
       // Update booking status
@@ -105,9 +109,11 @@ export async function cancelBooking(formData: FormData) {
     })
 
     revalidatePath('/p/dashboard')
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     return {
       success: true,
-      message: 'Booking cancelled and refunded successfully!',
+      message: t('success.bookingCancelledAndRefunded'),
     }
   } catch (error) {
     console.error('Cancel booking error:', error)

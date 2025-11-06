@@ -3,19 +3,23 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 export async function bookSeat(formData: FormData) {
+  const lng = await getLocaleFromCookies()
+  const { t } = await getTranslation(lng, 'actions')
   const session = await auth()
 
   if (!session || !session.user) {
-    throw new Error('You must be logged in to book a seat')
+    throw new Error(t('errors.mustBeLoggedInToBook'))
   }
 
   const rideId = formData.get('rideId') as string
   const seatId = formData.get('seatId') as string | null
 
   if (!rideId) {
-    throw new Error('Ride ID is required')
+    throw new Error(t('errors.rideIdRequired'))
   }
 
   try {
@@ -30,11 +34,11 @@ export async function bookSeat(formData: FormData) {
       })
 
       if (!ride) {
-        throw new Error('Ride not found')
+        throw new Error(t('errors.rideNotFound'))
       }
 
       if (ride.status !== 'ACTIVE') {
-        throw new Error('This ride is not active')
+        throw new Error(t('errors.thisRideNotActive'))
       }
 
       // Get or create passenger's wallet
@@ -55,22 +59,22 @@ export async function bookSeat(formData: FormData) {
       const bookingPrice = ride.route.pricePerSeat
       if (wallet.balance < bookingPrice) {
         throw new Error(
-          `Insufficient wallet balance. Required: ${bookingPrice.toFixed(
-            2
-          )} EGP, Available: ${wallet.balance.toFixed(
-            2
-          )} EGP. Please charge your wallet first.`
+          t('errors.insufficientWalletBalance', {
+            required: bookingPrice.toFixed(2),
+            available: wallet.balance.toFixed(2),
+          })
         )
       }
 
-      // Variable to store the created booking
+      // Variable to store the created booking and seat number
       let createdBooking
+      let bookedSeatNumber: number | null = null
 
       // If seatId is provided, validate and assign the seat
       if (seatId) {
         // Check if seat is already booked for this ride
         if (ride.bookings && ride.bookings.length > 0) {
-          throw new Error('This seat is already booked for this ride')
+          throw new Error(t('errors.seatAlreadyBookedForRide'))
         }
 
         // Get the seat and check if it's available
@@ -79,21 +83,21 @@ export async function bookSeat(formData: FormData) {
         })
 
         if (!seat) {
-          throw new Error('Seat not found')
+          throw new Error(t('errors.seatNotFound'))
         }
 
         // Prevent booking the driver seat (seat #1)
         if (seat.seatNumber === 1) {
-          throw new Error(
-            'Seat #1 is reserved for the driver and cannot be booked'
-          )
+          throw new Error(t('errors.seat1ReservedForDriver'))
         }
 
         if (seat.status !== 'AVAILABLE') {
           throw new Error(
-            `Seat is not available. Status: ${seat.status.toLowerCase()}`
+            t('errors.seatNotAvailableStatus', { status: seat.status.toLowerCase() })
           )
         }
+
+        bookedSeatNumber = seat.seatNumber
 
         // Create the booking with seat assignment
         createdBooking = await tx.booking.create({
@@ -160,11 +164,13 @@ export async function bookSeat(formData: FormData) {
     })
 
     revalidatePath('/p/dashboard')
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     return {
       success: true,
-      message: seatId
-        ? 'Seat booked successfully!'
-        : 'Booking confirmed! Seat will be assigned on boarding.',
+      message: bookedSeatNumber
+        ? t('success.seatBooked', { number: bookedSeatNumber })
+        : t('success.bookingConfirmed'),
     }
   } catch (error) {
     console.error('Seat booking error:', error)

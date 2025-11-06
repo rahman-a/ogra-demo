@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { put } from '@vercel/blob'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 async function saveFile(
   file: File,
@@ -27,7 +29,9 @@ async function saveFile(
     return blob.url
   } catch (error) {
     console.error('File upload error:', error)
-    throw new Error(`Failed to upload ${fileType}`)
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
+    throw new Error(t('errors.failedToUploadFile', { fileType }))
   }
 }
 
@@ -122,7 +126,9 @@ export async function updateProfile(formData: FormData) {
     })
   } catch (error) {
     console.error('Profile update error:', error)
-    throw new Error('Failed to update profile')
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
+    throw new Error(t('errors.failedToUpdateProfile'))
   }
 
   // Revalidate paths to refresh data

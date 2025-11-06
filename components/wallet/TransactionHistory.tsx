@@ -8,6 +8,8 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react'
+import { useTranslation } from '@/i18n/client'
+import type { Locale } from '@/i18n/settings'
 
 type Transaction = {
   id: string
@@ -21,9 +23,14 @@ type Transaction = {
 
 interface TransactionHistoryProps {
   transactions: Transaction[]
+  lng: Locale
 }
 
-export function TransactionHistory({ transactions }: TransactionHistoryProps) {
+export function TransactionHistory({
+  transactions,
+  lng,
+}: TransactionHistoryProps) {
+  const { t } = useTranslation(lng, 'dashboard')
   const getTransactionIcon = (type: string, amount: number) => {
     if (amount > 0) {
       return <ArrowUpCircle className='w-5 h-5 text-green-600' />
@@ -49,19 +56,19 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
   const getTransactionLabel = (type: string) => {
     switch (type) {
       case 'DEPOSIT':
-        return 'Wallet Charge'
+        return t('passengerWallet.walletCharge')
       case 'WITHDRAWAL':
-        return 'Withdrawal'
+        return t('passengerWallet.withdrawal')
       case 'BOOKING_PAYMENT':
-        return 'Booking Payment'
+        return t('passengerWallet.bookingPayment')
       case 'BOOKING_REFUND':
-        return 'Booking Refund'
+        return t('passengerWallet.bookingRefund')
       case 'RIDE_EARNING':
-        return 'Ride Earning'
+        return t('passengerWallet.rideEarning')
       case 'TRANSFER_IN':
-        return 'Transfer Received'
+        return t('passengerWallet.transferReceived')
       case 'TRANSFER_OUT':
-        return 'Transfer Sent'
+        return t('passengerWallet.transferSent')
       default:
         return type
     }
@@ -72,10 +79,10 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
       <div className='bg-white rounded-2xl shadow-lg p-8 text-center'>
         <Clock className='w-16 h-16 text-gray-400 mx-auto mb-4' />
         <h3 className='text-lg font-semibold text-gray-700 mb-2'>
-          No Transactions Yet
+          {t('passengerWallet.noTransactionsYet')}
         </h3>
         <p className='text-sm text-gray-500'>
-          Your transaction history will appear here
+          {t('passengerWallet.transactionHistoryAppear')}
         </p>
       </div>
     )
@@ -84,7 +91,7 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
   return (
     <div className='bg-white rounded-2xl shadow-lg p-6'>
       <h2 className='text-xl font-bold text-gray-800 mb-4'>
-        Transaction History
+        {t('passengerWallet.transactionHistory')}
       </h2>
 
       <div className='space-y-3'>
@@ -121,23 +128,26 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
               </div>
             </div>
 
-            <div className='text-right'>
-              <p
-                className={`text-lg font-bold ${
-                  transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                {transaction.amount > 0 ? '+' : ''}E£
-                {Math.abs(transaction.amount).toFixed(2)}
-              </p>
-              <p className='text-xs text-gray-500'>
-                Balance: E£{transaction.balanceAfter.toFixed(2)}
-              </p>
-            </div>
+                <div className='text-right'>
+                  <p
+                    className={`text-lg font-bold ${
+                      transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
+                    }`}
+                  >
+                    {lng === 'ar'
+                      ? `${transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)} ${t('currency.symbol')}`
+                      : `${transaction.amount > 0 ? '+' : ''}${t('currency.symbol')}${Math.abs(transaction.amount).toFixed(2)}`}
+                  </p>
+                  <p className='text-xs text-gray-500'>
+                    {t('passengerWallet.balance')}:{' '}
+                    {lng === 'ar'
+                      ? `${transaction.balanceAfter.toFixed(2)} ${t('currency.symbol')}`
+                      : `${t('currency.symbol')}${transaction.balanceAfter.toFixed(2)}`}
+                  </p>
+                </div>
           </div>
         ))}
       </div>
     </div>
   )
 }
-

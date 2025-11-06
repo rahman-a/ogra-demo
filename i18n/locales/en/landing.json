@@ -1,0 +1,163 @@
+{
+  "meta": {
+    "title": "Smart Ride-Sharing App | Book Seats Instantly",
+    "description": "Revolutionary ride-sharing platform with real-time seat booking. Drivers earn more, passengers ride smarter. Join via barcode, car plate, or chair code.",
+    "keywords": "ride-sharing app, smart ride system, driver dashboard, passenger app, barcode ride booking, car plate booking, digital ride-sharing platform"
+  },
+  "hero": {
+    "liveNow": "Live & Active Now",
+    "title": "Start Your Smart Ride Today",
+    "description": "The future of ride-sharing is here. Drivers create routes, passengers book seats instantly. Real-time updates, multiple booking options, seamless payments.",
+    "downloadApp": "Download App",
+    "seeHowItWorks": "See How It Works",
+    "stats": {
+      "activeRides": "Active Rides",
+      "userRating": "User Rating",
+      "happyUsers": "Happy Users"
+    },
+    "demo": {
+      "title": "Ahmed's Ride",
+      "route": "Cairo → Alex • 09:00 AM",
+      "liveSeatView": "Live Seat View",
+      "seat": "Seat",
+      "booked": "Booked ✓"
+    }
+  },
+  "howItWorks": {
+    "title": "How It Works",
+    "subtitle": "Simple, smart, and seamless for both drivers and passengers",
+    "forDrivers": "For Drivers",
+    "forPassengers": "For Passengers",
+    "driver": {
+      "step1": {
+        "title": "Register Your Route",
+        "description": "Create a ride based on your regular route. Set departure time, destination, and available seats."
+      },
+      "step2": {
+        "title": "View Live Bookings",
+        "description": "Watch your car layout in real-time. Booked seats turn green instantly with passenger details."
+      },
+      "step3": {
+        "title": "Get Instant Notifications",
+        "description": "Receive alerts like \"Seat 5 booked by Ahmed\" with payment confirmation automatically."
+      }
+    },
+    "passenger": {
+      "step1": {
+        "title": "Scan Seat Barcode",
+        "description": "Simply scan the barcode on your seat to instantly join the ride. Quick and contactless."
+      },
+      "step2": {
+        "title": "Enter Chair Code",
+        "description": "Barcode damaged? No problem. Enter the 14-digit chair code manually to book your seat."
+      },
+      "step3": {
+        "title": "Use License Plate",
+        "description": "Enter the car's license plate number to find and join the active ride. Multiple ways to connect!"
+      }
+    }
+  },
+  "features": {
+    "title": "Powerful Features",
+    "subtitle": "Everything you need for a seamless ride-sharing experience",
+    "realTime": {
+      "title": "Real-Time Seat Visualization",
+      "description": "Watch your car fill up in real-time. Each booking turns the corresponding seat green on your dashboard, with instant passenger notifications and complete transparency."
+    },
+    "notifications": {
+      "title": "Instant Notifications",
+      "description": "Never miss a booking. Get real-time alerts when passengers book seats, complete payments, or cancel rides. Stay informed every step of the way."
+    },
+    "multipleBooking": {
+      "title": "Multiple Booking Methods",
+      "description": "Passengers can join rides by scanning barcodes, entering 14-digit chair codes, or using license plate numbers. Flexibility meets convenience."
+    },
+    "securePayments": {
+      "title": "Secure Payments",
+      "description": "Automatic payment processing with multiple payment methods. Drivers get paid instantly when passengers book, with full transaction history."
+    }
+  },
+  "benefits": {
+    "title": "Why Choose Our Platform?",
+    "convenience": {
+      "title": "Maximum Convenience",
+      "description": "Book rides in seconds using barcodes, codes, or license plates. No complicated forms or lengthy processes."
+    },
+    "transparency": {
+      "title": "Complete Transparency",
+      "description": "See exactly who booked which seat, when, and payment status. No hidden surprises, just clear information."
+    },
+    "technology": {
+      "title": "Cutting-Edge Technology",
+      "description": "Built with the latest tech stack for lightning-fast performance, real-time updates, and seamless user experience."
+    },
+    "earnMore": {
+      "title": "Earn More, Save More",
+      "description": "Drivers maximize earnings on regular routes. Passengers save money compared to traditional taxis and ride services."
+    },
+    "stats": {
+      "earnings": "Average Driver Earnings",
+      "earningsValue": "$450/week",
+      "savings": "Passenger Savings",
+      "savingsValue": "Up to 60%",
+      "speed": "Booking Speed",
+      "speedValue": "< 10 sec"
+    }
+  },
+  "testimonials": {
+    "title": "Trusted by Thousands",
+    "subtitle": "See what our users are saying about their experience",
+    "testimonial1": {
+      "quote": "This app changed my daily commute completely! I drive the same route every day and now I'm earning extra income. The seat visualization is genius!",
+      "name": "Mohamed Ali",
+      "role": "Driver, Cairo"
+    },
+    "testimonial2": {
+      "quote": "So easy to use! I just scan the barcode and I'm booked. Way cheaper than Uber and the drivers are super reliable. Best commute app ever!",
+      "name": "Sara Ahmed",
+      "role": "Passenger, Alexandria"
+    },
+    "testimonial3": {
+      "quote": "The real-time notifications are perfect! I know exactly when someone books and the payment comes through instantly. This is the future!",
+      "name": "Khaled Hassan",
+      "role": "Driver, Giza"
+    },
+    "trust": {
+      "securePayments": "Secure Payments",
+      "securePaymentsDesc": "Bank-level encryption",
+      "verifiedDrivers": "Verified Drivers",
+      "verifiedDriversDesc": "Background checked",
+      "support247": "24/7 Support",
+      "support247Desc": "Always here to help",
+      "insuranceCovered": "Insurance Covered",
+      "insuranceCoveredDesc": "Protected every ride"
+    }
+  },
+  "cta": {
+    "title": "Ready to Transform Your Commute?",
+    "subtitle": "Join thousands of drivers and passengers already using the smartest ride-sharing platform. Download now and start your journey.",
+    "appStore": "App Store",
+    "downloadOn": "Download on the",
+    "googlePlay": "Google Play",
+    "getItOn": "GET IT ON",
+    "rating": "Rating",
+    "downloads": "Downloads",
+    "freeToUse": "Free to Use"
+  },
+  "footer": {
+    "brandName": "Smart Ride",
+    "description": "Revolutionizing urban transportation with intelligent ride-sharing technology. Connect drivers and passengers seamlessly.",
+    "product": "Product",
+    "features": "Features",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "support": "Support",
+    "company": "Company",
+    "aboutUs": "About Us",
+    "careers": "Careers",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "copyright": "© 2025 Smart Ride. All rights reserved. Built with innovation and care."
+  }
+}
+

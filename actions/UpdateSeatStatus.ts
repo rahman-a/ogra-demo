@@ -3,26 +3,30 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 type SeatStatus = 'AVAILABLE' | 'OCCUPIED' | 'ON_MAINTENANCE'
 
 export async function updateSeatStatus(formData: FormData) {
+  const lng = await getLocaleFromCookies()
+  const { t } = await getTranslation(lng, 'actions')
   const session = await auth()
 
   if (!session || !session.user) {
-    throw new Error('You must be logged in')
+    throw new Error(t('errors.mustBeLoggedIn'))
   }
 
   const seatId = formData.get('seatId') as string
   const status = formData.get('status') as SeatStatus
 
   if (!seatId || !status) {
-    throw new Error('Seat ID and status are required')
+    throw new Error(t('errors.seatIdAndStatusRequired'))
   }
 
   // Validate status
   if (!['AVAILABLE', 'OCCUPIED', 'ON_MAINTENANCE'].includes(status)) {
-    throw new Error('Invalid seat status')
+    throw new Error(t('errors.invalidSeatStatus'))
   }
 
   try {
@@ -35,12 +39,12 @@ export async function updateSeatStatus(formData: FormData) {
     })
 
     if (!seat) {
-      throw new Error('Seat not found')
+      throw new Error(t('errors.seatNotFound'))
     }
 
     // Check if user owns this vehicle
     if (seat.vehicle.userId !== session.user.id) {
-      throw new Error('You can only update seats in your own vehicle')
+      throw new Error(t('errors.canOnlyUpdateOwnVehicleSeats'))
     }
 
     // Update seat status
@@ -50,11 +54,14 @@ export async function updateSeatStatus(formData: FormData) {
     })
 
     revalidatePath('/d/dashboard')
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     return {
       success: true,
-      message: `Seat ${
-        seat.seatNumber
-      } status updated to ${status.toLowerCase()}`,
+      message: t('success.seatStatusUpdated', {
+        number: seat.seatNumber,
+        status: status.toLowerCase(),
+      }),
     }
   } catch (error) {
     console.error('Update seat status error:', error)

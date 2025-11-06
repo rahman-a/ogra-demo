@@ -1,0 +1,38 @@
+{
+  "title": "المحفظة",
+  "currentBalance": "الرصيد الحالي",
+  "availableBalance": "الرصيد المتاح",
+  "chargeWallet": "شحن المحفظة",
+  "withdrawMoney": "سحب المال",
+  "transferMoney": "تحويل المال",
+  "transactionHistory": "سجل المعاملات",
+  "noTransactions": "لم يتم العثور على معاملات",
+  "amount": "المبلغ",
+  "enterAmount": "أدخل المبلغ",
+  "recipient": "المستلم",
+  "recipientEmail": "البريد الإلكتروني للمستلم",
+  "description": "الوصف",
+  "transactionDate": "تاريخ المعاملة",
+  "transactionType": "نوع المعاملة",
+  "transactionId": "رقم المعاملة",
+  "transactionStatus": "حالة المعاملة",
+  "types": {
+    "CHARGE": "شحن",
+    "WITHDRAW": "سحب",
+    "TRANSFER": "تحويل",
+    "PAYMENT": "دفع",
+    "REFUND": "استرداد"
+  },
+  "status": {
+    "PENDING": "قيد الانتظار",
+    "COMPLETED": "مكتمل",
+    "FAILED": "فشل",
+    "CANCELLED": "ملغي"
+  },
+  "chargeSuccess": "تم شحن المحفظة بنجاح",
+  "withdrawSuccess": "تم السحب بنجاح",
+  "transferSuccess": "تم التحويل بنجاح",
+  "insufficientBalance": "رصيد غير كافٍ",
+  "invalidAmount": "مبلغ غير صحيح"
+}
+

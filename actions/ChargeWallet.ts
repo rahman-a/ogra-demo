@@ -3,6 +3,8 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { getTranslation } from '@/i18n'
+import { getLocaleFromCookies } from '@/lib/get-locale'
 
 type PaymentMethod =
   | 'DEBIT_CARD'
@@ -13,22 +15,24 @@ type PaymentMethod =
   | 'ORANGE_CASH'
 
 export async function chargeWallet(formData: FormData) {
+  const lng = await getLocaleFromCookies()
+  const { t } = await getTranslation(lng, 'actions')
   const session = await auth()
 
   if (!session || !session.user) {
-    throw new Error('You must be logged in')
+    throw new Error(t('errors.mustBeLoggedIn'))
   }
 
   const amount = formData.get('amount') as string
   const paymentMethod = formData.get('paymentMethod') as PaymentMethod
 
   if (!amount || !paymentMethod) {
-    throw new Error('Amount and payment method are required')
+    throw new Error(t('errors.amountAndPaymentMethodRequired'))
   }
 
   const amountNum = parseFloat(amount)
   if (isNaN(amountNum) || amountNum <= 0) {
-    throw new Error('Amount must be a positive number')
+    throw new Error(t('errors.amountMustBePositive'))
   }
 
   // Validate payment method
@@ -41,7 +45,7 @@ export async function chargeWallet(formData: FormData) {
     'ORANGE_CASH',
   ]
   if (!validMethods.includes(paymentMethod)) {
-    throw new Error('Invalid payment method')
+    throw new Error(t('errors.invalidPaymentMethod'))
   }
 
   try {
@@ -87,9 +91,11 @@ export async function chargeWallet(formData: FormData) {
 
     revalidatePath('/d/dashboard')
     revalidatePath('/p/dashboard')
+    const lng = await getLocaleFromCookies()
+    const { t } = await getTranslation(lng, 'actions')
     return {
       success: true,
-      message: `Successfully added ${amountNum.toFixed(2)} EGP to your wallet`,
+      message: t('success.chargeSuccess', { amount: amountNum.toFixed(2) }),
     }
   } catch (error) {
     console.error('Charge wallet error:', error)
